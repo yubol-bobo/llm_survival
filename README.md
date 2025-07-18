@@ -19,23 +19,16 @@ Survival Analysis/
 ```
 
 ## Environment Setup
-### 1. Python (Recommended: Miniconda/Anaconda)
+### Python Dependencies
 ```bash
 conda env create -f environment.yml
 conda activate survival_analysis
 ```
 
-### 2. R and pymer4 (for GLMMs)
-- Install R (https://cran.r-project.org/)
-- In R, install lme4:
-```R
-install.packages('lme4')
-```
-- In Python, install pymer4:
-```bash
-pip install pymer4
-```
-- If you encounter issues, see [pymer4 documentation](https://eshinjolly.com/pymer4/).
+The project uses:
+- Python 3.11
+- Core packages: numpy, pandas, scikit-learn, matplotlib, tqdm
+- Specialized packages: lifelines (survival analysis), sentence-transformers
 
 ## Data Processing
 Run the following to process raw data and generate static/long tables:
@@ -56,7 +49,7 @@ Fit advanced models (GLMMs, CoxPH with frailty):
 ```bash
 python advanced_modeling.py
 ```
-- Requires R and pymer4 for Poisson/NegBin GLMMs.
+- Uses lifelines for Cox proportional hazards models with frailty terms.
 
 ## Evaluation & Visualization
 Evaluate model fit, predictive accuracy, and diagnostics:
@@ -78,7 +71,7 @@ python compare.py
 - All code and dependencies are specified in `environment.yml` and this README.
 - Random seeds are set for splits and modeling where possible.
 - All scripts are modular and can be run independently or as a pipeline.
-- For full reproducibility, ensure R and lme4 are installed for GLMMs.
+- Pure Python implementation with no external software dependencies.
 
 ## Notes & Recommendations
 - For large datasets, consider batching or parallel processing in `data_process.py`.
