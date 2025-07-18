@@ -79,4 +79,4 @@ python compare.py
 - For ablation or robustness studies, modify covariates in the modeling scripts.
 
 ## Contact
-For questions or collaboration, please contact [Your Name] at [your.email@domain.com]. 
+For questions or collaboration, please contact yubo li at yubol@andrew.cmu.edu. 
