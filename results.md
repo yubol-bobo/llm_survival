@@ -100,6 +100,42 @@ All models show improved AIC with subject and difficulty stratification, confirm
 
 ---
 
+## 2.3 Time-Varying and Interaction Modeling
+
+### **2.3.1 Baseline Time-Varying Modeling**
+
+- **Approach:** Cox time-varying models were fit for each LLM, modeling the risk of failure at each turn as a function of adversarial prompt type, base prompt category, and drift covariates.
+- **Key Covariates:** 
+  - `C(adv_id)`: Adversarial prompt type (categorical)
+  - `C(base_id)`: Base prompt category (categorical)
+  - `prompt_to_prompt_drift`, `context_to_prompt_drift`, `cumulative_drift`: Drift metrics
+
+- **Findings:**
+  - Prompt-to-prompt drift and context-to-prompt drift effects are highly significant for most models, indicating that both the type of adversarial prompt and the evolving context impact LLM consistency.
+  - Some models show greater resilience to drift, while others are more sensitive to adversarial context.
+  - See `baseline_time_varying_results.csv` for full model-by-model coefficients and significance.
+
+### **2.3.2 Interaction and Advanced Time-Varying Modeling**
+
+- **Approach:** Interaction models include terms for the interaction between adversarial prompt type and drift, as well as higher-order effects (e.g., drift × base prompt type).
+- **Key Covariates:**
+  - All baseline covariates, plus interaction terms such as `C(adv_id):prompt_to_prompt_drift` and `C(base_id):context_to_prompt_drift`.
+
+- **Findings:**
+  - Significant interaction effects are observed for several LLMs, suggesting that the impact of drift is modulated by the type of adversarial or base prompt.
+  - Some LLMs show robust performance across all prompt types, while others are particularly vulnerable to specific adversarial strategies.
+  - See `interaction_time_varying_results.csv` and `model_comparison_time_varying.csv` for detailed results.
+
+- **Model Comparison:**
+  - Model comparison metrics (AIC, log-likelihood) indicate that including interaction terms improves model fit for most LLMs.
+  - The best-performing models maintain high survival probabilities even under high drift and challenging adversarial conditions.
+
+---
+
+**All results reflect the strict experimental setting: only follow-up rounds 1–8, and only for questions where round_0 was correct.**
+
+For detailed coefficients, p-values, and model comparisons, refer to the CSVs in `generated/outputs/`.
+
 ## 3. Statistical Summary and Implications
 
 ### 3.1 Cross-Analysis Integration

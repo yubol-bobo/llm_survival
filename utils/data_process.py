@@ -86,15 +86,28 @@ for model in os.listdir(RAW_DATA_DIR):
             else:
                 indicator = int(val)
             round_indicators.append(indicator)
+        # Only keep conversations where round_0 == 1
+        if len(round_indicators) == 0 or round_indicators[0] != 1:
+            continue
+        # Only keep rounds 1 to 8 (follow-up rounds)
+        max_followup_round = 8
+        # For static table, we care about time to failure in rounds 1-8
         time_to_failure = None
         censored = 0
+        for i in range(1, max_followup_round + 1):
+            if i >= len(round_indicators) or round_indicators[i] == 0:
+                time_to_failure = i if i <= max_followup_round else max_followup_round
+                break
+        if time_to_failure is None:
+            time_to_failure = max_followup_round
+            censored = 1
         prompt_embeddings = []
         context_embeddings = []
         prompt_complexities = []
         context_texts = []
-        # Prepare for drift calculations
+        # Prepare for drift calculations (for rounds 0 to 8)
         for i, msg in enumerate(conv):
-            if msg['role'] == 'user':
+            if msg['role'] == 'user' and i <= max_followup_round:
                 prompt = msg['content']
                 prompt_embeddings.append(model_embed.encode(prompt, show_progress_bar=False))
                 prompt_complexities.append(len(prompt.split()))
@@ -105,7 +118,7 @@ for model in os.listdir(RAW_DATA_DIR):
                 context += prompt
                 context_texts.append(context)
                 context_embeddings.append(model_embed.encode(context, show_progress_bar=False))
-        # Calculate drifts
+        # Calculate drifts (for rounds 0 to 8)
         prompt_to_prompt_drifts = [None]
         for i in range(1, len(prompt_embeddings)):
             prompt_to_prompt_drifts.append(cosine_dist(prompt_embeddings[i-1], prompt_embeddings[i]))
@@ -118,15 +131,7 @@ for model in os.listdir(RAW_DATA_DIR):
             if d is not None:
                 cum += d
             cumulative_drifts.append(cum)
-        # Find time to failure and censoring
-        for i, indicator in enumerate(round_indicators):
-            if indicator == 0:
-                time_to_failure = i
-                break
-        if time_to_failure is None:
-            time_to_failure = len(round_indicators)
-            censored = 1
-        # Static table row
+        # Static table row (only for conversations that passed round_0)
         static_rows.append({
             'conversation_id': conv_id,
             'model': model_name,
@@ -134,22 +139,15 @@ for model in os.listdir(RAW_DATA_DIR):
             'model_prompt0_interaction': f'{model_name}_{prompt0_id}',
             'time_to_failure': time_to_failure,
             'censored': censored,
-            'avg_prompt_to_prompt_drift': np.nanmean([d for d in prompt_to_prompt_drifts if d is not None]) if len(prompt_to_prompt_drifts) > 1 else None,
-            'avg_context_to_prompt_drift': np.nanmean([d for d in context_to_prompt_drifts if d is not None]) if len(context_to_prompt_drifts) > 0 else None,
-            'avg_prompt_complexity': np.mean(prompt_complexities) if prompt_complexities else None,
+            'avg_prompt_to_prompt_drift': np.nanmean([d for d in prompt_to_prompt_drifts[1:max_followup_round+1] if d is not None]) if len(prompt_to_prompt_drifts) > 1 else None,
+            'avg_context_to_prompt_drift': np.nanmean([d for d in context_to_prompt_drifts[1:max_followup_round+1] if d is not None]) if len(context_to_prompt_drifts) > 1 else None,
+            'avg_prompt_complexity': np.mean(prompt_complexities[1:max_followup_round+1]) if len(prompt_complexities) > 1 else None,
         })
-        # Long table rows
-        for i, val in enumerate(rounds):
-            if isinstance(val, str) and val.startswith('('):
-                label = int(val.split(',')[0].replace('(', '').strip())
-                conf_str = val.split(',')[1].replace(')', '').strip()
-                confidence = float(conf_str) if conf_str.lower() != 'none' else None
-            elif pd.isna(val) or val == '' or val == 0:
-                label = 0
-                confidence = None
-            else:
-                label = int(val)
-                confidence = None
+        # Long table rows (only for rounds 1 to 8)
+        for i in range(1, max_followup_round + 1):
+            if i >= len(round_indicators):
+                break
+            label = round_indicators[i]
             failure = 1 if (label == 0 and censored == 0 and i == time_to_failure) else 0
             long_rows.append({
                 'conversation_id': conv_id,
@@ -161,9 +159,8 @@ for model in os.listdir(RAW_DATA_DIR):
                 'context_to_prompt_drift': context_to_prompt_drifts[i] if i < len(context_to_prompt_drifts) else None,
                 'cumulative_drift': cumulative_drifts[i] if i < len(cumulative_drifts) else None,
                 'prompt_complexity': prompt_complexities[i] if i < len(prompt_complexities) else None,
-                'confidence': confidence,
                 'failure': failure,
-                'censored': 1 if (i == len(round_indicators)-1 and censored == 1) else 0,
+                'censored': 1 if (i == max_followup_round and censored == 1) else 0,
             })
 
     pd.DataFrame(static_rows).to_csv(os.path.join(out_dir, f'{model}_static.csv'), index=False)

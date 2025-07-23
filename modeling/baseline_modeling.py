@@ -238,8 +238,78 @@ class LLMRobustnessAnalyzer:
         self.survival_summary = pd.DataFrame(survival_summary)
         return self.count_summary, self.survival_summary
     def create_beautiful_visualizations(self):
-        # ... existing code ...
-        pass  # (No change needed here, keep as is)
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        import os
+        # Ensure output directory exists
+        os.makedirs('generated/figs', exist_ok=True)
+        # Load the CSVs
+        model_df = pd.read_csv('generated/outputs/model_analysis_results.csv')
+        surv_df = pd.read_csv('generated/outputs/survival_analysis_results.csv')
+        # Merge for joint plots
+        merged = pd.merge(model_df, surv_df, on='Model')
+        # Set style
+        sns.set(style="whitegrid", palette="husl", font_scale=1.2)
+        # 1. Bar plot: C-index by model
+        plt.figure(figsize=(10,6))
+        order = merged.sort_values('C_index', ascending=False)['Model']
+        sns.barplot(x='C_index', y='Model', data=merged, order=order, palette='viridis')
+        plt.title('C-index by Model (Survival Discrimination)')
+        plt.xlabel('C-index')
+        plt.ylabel('Model')
+        plt.tight_layout()
+        plt.savefig('generated/figs/llm_cindex_by_model.png', dpi=300)
+        plt.close()
+        # 2. Bar plot: Drift_coef by model, color by p-value significance
+        plt.figure(figsize=(10,6))
+        # Add a significance column for coloring
+        def pval_to_sig(p):
+            if p < 0.05:
+                return 'p < 0.05'
+            elif p < 0.1:
+                return 'p < 0.1'
+            else:
+                return 'n.s.'
+        merged['Significance'] = merged['Drift_pval'].apply(pval_to_sig)
+        sns.barplot(x='Drift_coef', y='Model', data=merged, order=order, hue='Significance', dodge=False, palette={'p < 0.05':'#d62728', 'p < 0.1':'#ff7f0e', 'n.s.':'#1f77b4'})
+        plt.title('Drift Coefficient by Model (Negative Binomial)')
+        plt.xlabel('Drift Coefficient')
+        plt.ylabel('Model')
+        plt.legend(title='Drift p-value', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('generated/figs/llm_drift_coef_by_model.png', dpi=300)
+        plt.close()
+        # 3. Bar plot: AIC by model
+        plt.figure(figsize=(10,6))
+        order_aic = merged.sort_values('AIC')['Model']
+        sns.barplot(x='AIC', y='Model', data=merged, order=order_aic, palette='mako')
+        plt.title('AIC by Model (Lower is Better)')
+        plt.xlabel('AIC')
+        plt.ylabel('Model')
+        plt.tight_layout()
+        plt.savefig('generated/figs/llm_aic_by_model.png', dpi=300)
+        plt.close()
+        # 4. Scatter plot: Drift_coef vs C-index
+        plt.figure(figsize=(8,6))
+        sns.scatterplot(x='Drift_coef', y='C_index', hue='Model', data=merged, s=120, palette='tab10')
+        plt.title('Drift Coefficient vs C-index')
+        plt.xlabel('Drift Coefficient (NegBin)')
+        plt.ylabel('C-index (Survival)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('generated/figs/llm_drift_vs_cindex.png', dpi=300)
+        plt.close()
+        # 5. Scatter plot: AIC vs C-index
+        plt.figure(figsize=(8,6))
+        sns.scatterplot(x='AIC', y='C_index', hue='Model', data=merged, s=120, palette='tab20')
+        plt.title('AIC vs C-index by Model')
+        plt.xlabel('AIC (NegBin)')
+        plt.ylabel('C-index (Survival)')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        plt.savefig('generated/figs/llm_aic_vs_cindex.png', dpi=300)
+        plt.close()
     def generate_report(self):
         # ... existing code ...
         pass  # (No change needed here, keep as is)

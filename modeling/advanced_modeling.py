@@ -432,8 +432,8 @@ class IndividualAdvancedModeling:
         plt.tight_layout()
         
         # Save visualization
-        os.makedirs('../generated/figs', exist_ok=True)
-        plt.savefig('../generated/figs/individual_advanced_modeling.png', dpi=300, bbox_inches='tight')
+        os.makedirs('generated/figs', exist_ok=True)
+        plt.savefig('generated/figs/individual_advanced_modeling.png', dpi=300, bbox_inches='tight')
         print("✅ Visualization saved: individual_advanced_modeling.png")
         plt.close()
     
@@ -441,8 +441,7 @@ class IndividualAdvancedModeling:
         """Save individual model results."""
         print("\n💾 SAVING INDIVIDUAL MODEL RESULTS")
         print("=" * 40)
-        
-        os.makedirs('../generated/outputs', exist_ok=True)
+        os.makedirs('generated/outputs', exist_ok=True)
         
         # Convert to JSON-serializable format
         def convert_numpy_types(obj):
@@ -461,14 +460,14 @@ class IndividualAdvancedModeling:
         
         # Save detailed results
         results_serializable = convert_numpy_types(self.individual_results)
-        with open('../generated/outputs/individual_advanced_results.json', 'w') as f:
+        with open('generated/outputs/individual_advanced_results.json', 'w') as f:
             json.dump(results_serializable, f, indent=2)
         print("✅ Detailed results: individual_advanced_results.json")
         
         # Save comparison table
         if self.all_individual_comparisons:
             pd.DataFrame(self.all_individual_comparisons).to_csv(
-                '../generated/outputs/individual_model_comparisons.csv', index=False)
+                'generated/outputs/individual_model_comparisons.csv', index=False)
             print("✅ Comparison table: individual_model_comparisons.csv")
         
         print("\n📁 Generated files:")
