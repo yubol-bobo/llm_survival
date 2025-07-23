@@ -453,6 +453,144 @@ class TimeVaryingAdvancedAnalyzer:
         except Exception as e:
             print(f"❌ Visualization failed: {e}")
 
+    def save_time_varying_group_analysis(self):
+        """Save subject and difficulty level analysis from time-varying advanced models."""
+        print("\n💾 SAVING TIME-VARYING GROUP ANALYSIS")
+        os.makedirs('generated/outputs', exist_ok=True)
+        subject_rows = []
+        difficulty_rows = []
+        for model_name, df in self.models_data.items():
+            # Assume 'base_id' is subject, 'difficulty' or 'level' is present in df
+            if 'base_id' in df.columns:
+                for subject in df['base_id'].unique():
+                    sub_df = df[df['base_id'] == subject]
+                    fail_times = sub_df[sub_df['fail'] == 1]['turn_stop']
+                    subject_rows.append({
+                        'subject': subject,
+                        'time_to_failure_mean': fail_times.mean(),
+                        'time_to_failure_std': fail_times.std(),
+                        'time_to_failure_count': len(fail_times),
+                        'model': model_name
+                    })
+            # Fix: check for both 'difficulty' and 'level'
+            diff_col = None
+            if 'difficulty' in df.columns:
+                diff_col = 'difficulty'
+            elif 'level' in df.columns:
+                diff_col = 'level'
+            if diff_col:
+                for diff in df[diff_col].unique():
+                    diff_df = df[df[diff_col] == diff]
+                    fail_times = diff_df[diff_df['fail'] == 1]['turn_stop']
+                    difficulty_rows.append({
+                        'difficulty': diff,
+                        'time_to_failure_mean': fail_times.mean(),
+                        'time_to_failure_std': fail_times.std(),
+                        'time_to_failure_count': len(fail_times),
+                        'model': model_name
+                    })
+        if subject_rows:
+            pd.DataFrame(subject_rows).to_csv('generated/outputs/time_varying_subject_cluster_analysis.csv', index=False)
+            print("✅ Saved: time_varying_subject_cluster_analysis.csv")
+        if difficulty_rows:
+            pd.DataFrame(difficulty_rows).to_csv('generated/outputs/time_varying_difficulty_level_analysis.csv', index=False)
+            print("✅ Saved: time_varying_difficulty_level_analysis.csv")
+
+    def visualize_group_analysis(self):
+        """Visualize the subject and difficulty level analysis from time-varying advanced models."""
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import os
+        print("\n🎨 Visualizing group-level time-varying analysis...")
+        os.makedirs('generated/figs', exist_ok=True)
+        # Subject-level plot
+        subj_path = 'generated/outputs/time_varying_subject_cluster_analysis.csv'
+        if os.path.exists(subj_path):
+            df_subj = pd.read_csv(subj_path)
+            plt.figure(figsize=(12, 6))
+            sns.barplot(data=df_subj, x='subject', y='time_to_failure_mean', hue='model', ci=None)
+            plt.title('Mean Time to Failure by Subject (Time-Varying Advanced)')
+            plt.ylabel('Mean Time to Failure')
+            plt.xlabel('Subject')
+            plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('generated/figs/time_varying_subject_cluster_barplot.png', dpi=300)
+            plt.close()
+            print('✅ Saved: time_varying_subject_cluster_barplot.png')
+        else:
+            print(f'⚠️ {subj_path} not found')
+        # Difficulty-level plot
+        diff_path = 'generated/outputs/time_varying_difficulty_level_analysis.csv'
+        if os.path.exists(diff_path):
+            df_diff = pd.read_csv(diff_path)
+            plt.figure(figsize=(12, 6))
+            sns.barplot(data=df_diff, x='difficulty', y='time_to_failure_mean', hue='model', ci=None)
+            plt.title('Mean Time to Failure by Difficulty Level (Time-Varying Advanced)')
+            plt.ylabel('Mean Time to Failure')
+            plt.xlabel('Difficulty Level')
+            plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            plt.savefig('generated/figs/time_varying_difficulty_level_barplot.png', dpi=300)
+            plt.close()
+            print('✅ Saved: time_varying_difficulty_level_barplot.png')
+        else:
+            print(f'⚠️ {diff_path} not found')
+
+    def visualize_drift_cliff(self):
+        """Visualize the drift cliff for each model using interaction_time_varying_results.csv."""
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import os
+        import numpy as np
+        print("\n🎨 Visualizing drift cliff across all models...")
+        os.makedirs('generated/figs', exist_ok=True)
+        df = pd.read_csv('generated/outputs/interaction_time_varying_results.csv')
+        drift_rows = df[df['covariate'].str.contains('prompt_to_prompt_drift') & (df['Analysis_Type'] == 'Interaction_TimeVarying')]
+        models = drift_rows['Model'].unique()
+        print(f"Models found: {models}")
+        plt.figure(figsize=(14, 8))
+        color_map = sns.color_palette('tab10', n_colors=len(models))
+        any_data = False
+        for i, model in enumerate(models):
+            model_df = drift_rows[drift_rows['Model'] == model]
+            main = model_df[model_df['covariate'] == 'prompt_to_prompt_drift']
+            if main.empty:
+                print(f"⚠️ No main drift effect for model {model}, skipping.")
+                continue
+            main_coef = main['coef'].values[0]
+            adv_rows = model_df[model_df['covariate'].str.contains('C\(adv_id\)\[T\.') & model_df['covariate'].str.contains(':prompt_to_prompt_drift')]
+            adv_ids = adv_rows['covariate'].str.extract(r'C\(adv_id\)\[T\.(.*?)\]:prompt_to_prompt_drift')[0].tolist()
+            adv_effects = []
+            adv_labels = []
+            for idx, row in adv_rows.iterrows():
+                adv_id = row['covariate'].split('[T.')[-1].split(']:')[0]
+                coef = main_coef + row['coef']
+                exp_coef = np.exp(coef)
+                # Clip extreme values for clarity
+                exp_coef = np.clip(exp_coef, 1e-3, 1e4)
+                adv_effects.append(exp_coef)
+                adv_labels.append(adv_id)
+            if len(adv_effects) > 0 and np.any(~np.isnan(adv_effects)):
+                plt.plot(adv_labels, adv_effects, marker='o', label=model, color=color_map[i])
+                any_data = True
+            else:
+                print(f"⚠️ No valid adv_effects for model {model}, skipping plot.")
+        plt.xlabel('Adversarial Prompt Type')
+        plt.ylabel('Hazard Ratio (exp(coef)) for Drift (log scale, clipped)')
+        plt.title('Drift Cliff: Hazard Ratio for Drift by Adversarial Prompt Type (All Models)\n(Values clipped to [1e-3, 1e4] for clarity)')
+        plt.yscale('log')
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+        if any_data:
+            plt.savefig('generated/figs/drift_cliff_all_models.png', dpi=300)
+            print("✅ Drift cliff plot saved: generated/figs/drift_cliff_all_models.png")
+        else:
+            print("❌ No data available to plot drift cliff!")
+        plt.close()
+
     def run_complete_analysis(self):
         """Run the complete time-varying advanced analysis."""
         print("🔬 TIME-VARYING ADVANCED MODELING WITH INTERACTIONS")
@@ -480,8 +618,14 @@ class TimeVaryingAdvancedAnalyzer:
         # Save results
         self.save_results()
         
+        # Save group-level time-varying analysis
+        self.save_time_varying_group_analysis()
+        
         # Create visualizations
         self.create_visualizations()
+        # Visualize group-level analysis
+        self.visualize_group_analysis()
+        self.visualize_drift_cliff()
         
         print(f"\n🎉 TIME-VARYING ADVANCED ANALYSIS COMPLETE!")
         print("=" * 50)

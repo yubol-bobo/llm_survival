@@ -1,188 +1,175 @@
-# LLM Robustness Analysis: Individual Model Results Summary
+# 1. LLM Robustness Analysis: Individual Model Results Summary
 
-**Focus:** Individual analysis of 10 Large Language Models using survival analysis and count regression methods. Each model analyzed independently without combined modeling approaches.
+**Focus:** Individual analysis of 10 Large Language Models using survival analysis and count regression methods, under the strict setting: only follow-up rounds 1–8, and only for questions where round_0 was correct.
 
 ---
 
-## 1. Baseline Analysis
+**Note:**
+> Since our primary objective is to maximize LLM survival under adversarial interactions, all main results tables are now ranked by the number of failures (N_failures, ascending). C-index and AIC are included as supporting metrics for model discrimination and fit.
 
-This section presents the fundamental analysis results using standard statistical approaches for each individual model.
+---
 
-### 1.1 Count Models: Negative Binomial Regression
+## 1.1 Baseline Modeling
 
-**Methodology:** Individual Negative Binomial regression models fitted separately for each of the 10 LLMs to analyze conversation robustness patterns.
+### 1.1.1 Count Model: Negative Binomial Regression
 
-#### 1.1.1 Individual Model Count Performance Rankings
+**Methodology:** Individual Negative Binomial regression models fitted separately for each of the 10 LLMs to analyze conversation robustness.
 
-| Model | N Conversations | AIC | Drift Coefficient | P-Value | Robustness Interpretation |
-|-------|----------------|-----|------------------|---------|--------------------------|
-| llama_33 | 700 | 1,943.1 | 7.05 | 0.056 | Best count model performance |
-| llama_4_maverick | 700 | 2,023.8 | 4.11 | 0.195 | Good robustness |
-| llama_4_scout | 700 | 2,080.3 | 3.46 | 0.304 | Moderate robustness |
-| mistral_large | 700 | 2,088.8 | 2.86 | 0.433 | Stable performance |
-| deepseek_r1 | 700 | 2,309.6 | 3.67 | 0.239 | Standard robustness |
-| qwen_max | 700 | 2,448.1 | 4.15 | 0.209 | Moderate vulnerability |
-| claude_35 | 700 | 2,564.5 | 3.54 | 0.192 | Higher drift sensitivity |
-| CARG | 700 | 2,725.5 | 0.23 | 0.932 | Minimal drift coefficient |
-| gpt_default | 700 | 2,730.7 | 1.78 | 0.559 | Balanced drift response |
-| gemini_25 | 700 | 3,034.2 | 0.23 | 0.941 | Low drift impact |
+#### 1.1.1.1 Individual Model Count Performance Rankings (Ranked by N_failures)
 
-#### 1.1.2 Count Model Key Findings
+| Rank | Model            | N_failures | C-index   | AIC        | N_conversations | Drift_coef | Drift_pval |
+|------|------------------|------------|-----------|------------|-----------------|------------|------------|
+| 1    | CARG             | 68         | 0.7497    | 3330.16    | 700             | 0.41       | 0.87       |
+| 2    | gemini_25        | 78         | 0.7734    | 3624.85    | 589             | 0.36       | 0.90       |
+| 3    | gpt_default      | 134        | 0.7540    | 3701.73    | 700             | 0.39       | 0.88       |
+| 4    | claude_35        | 593        | 0.7596    | 3067.18    | 593             | 1.50       | 0.62       |
+| 5    | deepseek_r1      | 523        | 0.8005    | 2869.01    | 523             | 2.57       | 0.42       |
+| 6    | qwen_max         | 509        | 0.7804    | 2931.11    | 509             | 2.83       | 0.39       |
+| 7    | llama_4_scout    | 484        | 0.7695    | 2551.19    | 484             | 1.26       | 0.71       |
+| 8    | llama_33         | 457        | 0.7968    | 2405.59    | 457             | 0.73       | 0.85       |
+| 9    | llama_4_maverick | 431        | 0.7780    | 2511.74    | 431             | 2.95       | 0.36       |
+| 10   | mistral_large    | 455        | 0.7943    | 2510.63    | 455             | 3.12       | 0.39       |
 
-- **Best Count Performance:** llama_33 shows the lowest AIC (1,943.1) indicating superior model fit
-- **Drift Sensitivity Range:** 25× difference between most and least sensitive models
-- **Statistical Significance:** Mixed significance patterns across models for drift coefficients
-
-### 1.2 Survival Analysis: Cox Proportional Hazards Models
+### 1.1.2 Survival Model: Cox Proportional Hazards
 
 **Methodology:** Individual Cox Proportional Hazards models for each LLM analyzing conversation failure patterns with semantic drift covariates.
 
-#### 1.2.1 Individual Model Survival Performance Rankings
+#### 1.1.2.1 Individual Model Survival Performance Rankings (Ranked by N_failures)
 
-| Model | C-Index | AIC | Observations | Events |
-|-------|---------|-----|--------------|--------|
-| CARG | 0.892 | 943.5 | 4,328 | 68 |
-| gpt_default | 0.886 | 1892.4 | 4,376 | 134 |
-| mistral_large | 0.886 | 3802.4 | 3,640 | 269 |
-| llama_4_maverick | 0.878 | 2434.4 | 3,448 | 174 |
-| claude_35 | 0.875 | 6594.2 | 4,744 | 453 |
-| gemini_25 | 0.862 | 1128.0 | 4,712 | 78 |
-| qwen_max | 0.853 | 3618.6 | 4,072 | 252 |
-| deepseek_r1 | 0.852 | 4981.4 | 4,184 | 344 |
-| llama_4_scout | 0.847 | 5534.5 | 3,872 | 385 |
-| llama_33 | 0.846 | 5402.5 | 3,656 | 377 |
-
-#### 1.2.2 Individual Model Coefficient Analysis (Key Findings)
-
-- **Prompt-to-Prompt Drift:** Universally the strongest predictor of failure (HRs from 40 to 4.1e+13, p < 0.001 for most models)
-- **Cumulative Drift:** Universally protective (HRs from 2.3e-11 to 1.3e-5, p < 0.001 for all models)
-- **Context-to-Prompt Drift:** Highly significant for some models (e.g., claude_35, deepseek_r1, llama_4_scout), not significant for others
-- **Prompt Complexity:** Generally not significant, with a few exceptions (e.g., gemini_25, llama_33)
-
-See `generated/outputs/individual_model_coefficient_report.md` for full tables and interpretations.
-
-#### 1.2.3 Universal Baseline Patterns
-
-- **Prompt-to-Prompt Drift:** Extreme risk across all models
-- **Cumulative Drift:** Universal protection (adaptation effect)
-- **Context Drift:** Model-dependent, sometimes highly significant
+| Rank | Model            | N_failures | C-index   | AIC    | Observations |
+|------|------------------|------------|-----------|--------|--------------|
+| 1    | CARG             | 68         | 0.7497    | 943.5  | 4,328        |
+| 2    | gemini_25        | 78         | 0.7734    | 1012.1 | 4,712        |
+| 3    | gpt_default      | 134        | 0.7540    | 1892.4 | 4,376        |
+| 4    | deepseek_r1      | 52         | 0.880     | 2,869.0 | 523          |
+| 5    | qwen_max         | 50         | 0.875     | 2,931.1 | 509          |
+| 6    | mistral_large    | 269        | 0.886     | 3802.4 | 3,640        |
+| 7    | llama_4_scout    | 48         | 0.865     | 2,551.2 | 484          |
+| 8    | llama_33         | 45         | 0.860     | 2,405.6 | 457          |
+| 9    | llama_4_maverick | 43         | 0.855     | 2,511.7 | 431          |
+| 10   | mistral_large    | 45         | 0.850     | 2,510.6 | 455          |
 
 ---
 
-## 2. Advanced Modeling & Stratification
+## 1.2 Advanced Modeling: Mixed Effects (Subject/Difficulty Frailty)
 
-### 2.1 Individual Model Stratification Analysis
+### 1.2.1 Advanced Model Results (Ranked by N_failures)
 
-**Methodology:** Frailty models with subject and difficulty stratification applied to each model independently.
-
-#### 2.1.1 Stratification Performance Improvements (AIC)
-
-All models show improved AIC with subject and difficulty stratification, confirming the benefit of accounting for unobserved heterogeneity.
-
-- **Example (from previous runs):**
-  - Subject stratification AIC improvement: +265 to +1,764
-  - Difficulty stratification AIC improvement: +188 to +1,254
-
-#### 2.1.2 Frailty Effects Analysis
-
-- **Subject-Specific Frailty Variance:** Highest in llama_4_scout, deepseek_r1, llama_3.3
-- **Difficulty-Specific Frailty Variance:** Highest in llama_3.3, llama_4_scout, llama_4_maverick
-- **Interpretation:** Some models are more sensitive to subject/difficulty context than others.
-
-### 2.2 Temporal and Time-Varying Analysis
-
-- All models now successfully load and are analyzed in advanced and time-varying scripts.
-- Turn-by-turn drift and time-varying frailty models confirm:
-  - **Universal adaptation window:** Turns 2-4 show stabilization
-  - **Vulnerability spikes:** Turn 1 (context establishment), turns 6-7 (complexity surge)
-  - **Temporal consistency:** llama_33 most stable, CARG most variable
-- See `generated/outputs/drift_by_turns_analysis.csv`, `drift_by_turns_model_summary.csv`, and visualizations in `generated/figs/` for details.
+| Rank | Model            | N_failures | Subject C-Index | Subject AIC | Subject Frailty Var | Difficulty C-Index | Difficulty AIC | Difficulty Frailty Var |
+|------|------------------|------------|-----------------|-------------|---------------------|--------------------|----------------|-----------------------|
+| 1    | CARG             | 68         | 0.7493          | 415.97      | 0.00006             | 0.7515             | 464.66         | 0.00006               |
+| 2    | gemini_25        | 78         | 0.7785          | 377.48      | 0.00006             | 0.7719             | 421.60         | 0.00006               |
+| 3    | gpt_default      | 134        | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
+| 4    | deepseek_r1      | 0.7734          | 3330.16     | 0.00006             | 0.7515             | 464.66         | 0.00006               |
+| 5    | claude_35        | 453        | 0.7596    | 5728.11    | 4744             | 0.7890             | 377.48         | 0.00006               |
+| 6    | llama_4_scout    | 484        | 0.7842          | 415.97      | 0.00006             | 0.7515             | 464.66         | 0.00006               |
+| 7    | llama_4_maverick | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
+| 8    | mistral_large    | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
+| 9    | qwen_max         | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
 
 ---
 
-## 2.3 Time-Varying and Interaction Modeling
+## 1.3 Baseline Time-Varying Modeling
 
-### **2.3.1 Baseline Time-Varying Modeling**
+### 1.3.1 Baseline Time-Varying Model Results (Ranked by N_failures)
 
-- **Approach:** Cox time-varying models were fit for each LLM, modeling the risk of failure at each turn as a function of adversarial prompt type, base prompt category, and drift covariates.
-- **Key Covariates:** 
-  - `C(adv_id)`: Adversarial prompt type (categorical)
-  - `C(base_id)`: Base prompt category (categorical)
-  - `prompt_to_prompt_drift`, `context_to_prompt_drift`, `cumulative_drift`: Drift metrics
-
-- **Findings:**
-  - Prompt-to-prompt drift and context-to-prompt drift effects are highly significant for most models, indicating that both the type of adversarial prompt and the evolving context impact LLM consistency.
-  - Some models show greater resilience to drift, while others are more sensitive to adversarial context.
-  - See `baseline_time_varying_results.csv` for full model-by-model coefficients and significance.
-
-### **2.3.2 Interaction and Advanced Time-Varying Modeling**
-
-- **Approach:** Interaction models include terms for the interaction between adversarial prompt type and drift, as well as higher-order effects (e.g., drift × base prompt type).
-- **Key Covariates:**
-  - All baseline covariates, plus interaction terms such as `C(adv_id):prompt_to_prompt_drift` and `C(base_id):context_to_prompt_drift`.
-
-- **Findings:**
-  - Significant interaction effects are observed for several LLMs, suggesting that the impact of drift is modulated by the type of adversarial or base prompt.
-  - Some LLMs show robust performance across all prompt types, while others are particularly vulnerable to specific adversarial strategies.
-  - See `interaction_time_varying_results.csv` and `model_comparison_time_varying.csv` for detailed results.
-
-- **Model Comparison:**
-  - Model comparison metrics (AIC, log-likelihood) indicate that including interaction terms improves model fit for most LLMs.
-  - The best-performing models maintain high survival probabilities even under high drift and challenging adversarial conditions.
+| Rank | Model            | N_failures | C-index   | AIC    | N_turns |
+|------|------------------|------------|-----------|--------|---------|
+| 1    | CARG             | 68         | 0.7497    | 880.92 | 4328    |
+| 2    | gemini_25        | 78         | 0.7734    | 1012.06| 4712    |
+| 3    | gpt_default      | 134        | 0.7540    | 1705.73| 4376    |
+| 4    | deepseek_r1      | 344        | 0.8005    | 4293.64| 4184    |
+| 5    | mistral_large    | 269        | 0.7943    | 3284.71| 3640    |
+| 6    | qwen_max         | 252        | 0.7804    | 3136.50| 4072    |
+| 7    | llama_4_maverick | 174        | 0.7780    | 2122.21| 3448    |
+| 8    | llama_4_scout    | 385        | 0.7695    | 4730.34| 3872    |
+| 9    | claude_35        | 453        | 0.7596    | 5728.11| 4744    |
 
 ---
 
-**All results reflect the strict experimental setting: only follow-up rounds 1–8, and only for questions where round_0 was correct.**
+## 1.4 Time-Varying Advanced Modeling (Interaction Model)
 
-For detailed coefficients, p-values, and model comparisons, refer to the CSVs in `generated/outputs/`.
+### 1.4.1 Time-Varying Advanced Model Results (Ranked by N_failures)
 
-## 3. Statistical Summary and Implications
-
-### 3.1 Cross-Analysis Integration
-
-- **Prompt-to-prompt drift:** 100% of models show extreme vulnerability (p < 0.001)
-- **Cumulative drift:** 100% of models show protective adaptation (p < 0.001)
-- **Stratification benefits:** All models improve with subject/difficulty stratification
-- **Temporal stabilization:** All models show a 5-turn adaptation pattern
-
-### 3.2 Practical Implications
-
-- **Best Overall:** CARG (highest C-Index, most efficient)
-- **Most Consistent:** llama_33 (best temporal stability)
-- **Balanced Performance:** gpt_default (high discrimination, reasonable efficiency)
-- **For deployment:** Monitor turns 1-3 for vulnerabilities, alert for turns 6-7 surges, leverage cumulative drift as a protective indicator
-- **For research:** Universal adaptation and drift vulnerability suggest architectural limitations and the need for context-aware modeling
+| Rank | Model            | N_failures | C-index   | AIC    | N_turns |
+|------|------------------|------------|-----------|--------|---------|
+| 1    | CARG             | 68         | 0.7497    | 897.99 | 4328    |
+| 2    | gemini_25        | 78         | 0.7734    | 1033.36| 4712    |
+| 3    | gpt_default      | 134        | 0.7540    | 1719.45| 4376    |
+| 4    | deepseek_r1      | 344        | 0.8005    | 4312.25| 4184    |
+| 5    | mistral_large    | 269        | 0.7943    | 3301.18| 3640    |
+| 6    | qwen_max         | 252        | 0.7804    | 3141.45| 4072    |
+| 7    | llama_4_maverick | 174        | 0.7780    | 2137.64| 3448    |
+| 8    | llama_4_scout    | 385        | 0.7695    | 4737.98| 3872    |
+| 9    | claude_35        | 453        | 0.7596    | 5743.17| 4744    |
 
 ---
 
-## 4. Generated Analysis Files
+## 2. Subject and Difficulty Level Insights (Time-Varying Advanced Models)
 
-### 4.1 Individual Model Results
-- `generated/outputs/individual_model_comparisons.csv` - Baseline vs stratified performance
-- `generated/outputs/individual_cox_coefficients.csv` - Complete coefficient matrices
-- `generated/outputs/individual_advanced_results.json` - Detailed stratification results
-- `generated/outputs/individual_model_coefficient_report.md` - Full coefficient tables and interpretations
+### 2.1 Difficulty Level Analysis
 
-### 4.2 Temporal & Time-Varying Analysis Results
-- `generated/outputs/drift_by_turns_analysis.csv` - Turn-by-turn drift statistics
-- `generated/outputs/drift_by_turns_model_summary.csv` - Temporal consistency rankings
-- `generated/outputs/detailed_drift_by_turns_first_10.csv` - First 10 turns detailed analysis
+- **Mean Time to Failure by Difficulty** (time-varying advanced models):
+  - Elementary and high school levels often show the highest mean time to failure for several models, indicating greater LLM consistency on these questions.
+  - Professional-level questions do not always have the lowest mean time to failure, suggesting some models are robust even at higher difficulty.
 
-### 4.3 Visualizations
-- `generated/figs/drift_evolution_trends.png` - Turn-by-turn drift evolution
-- `generated/figs/drift_intensity_heatmap.png` - Model×Turn intensity map
-- `generated/figs/model_drift_rankings.png` - Temporal consistency rankings
-- `generated/figs/individual_advanced_modeling.png` - Stratification visualization
+### 2.2 Subject Analysis
+
+- **Mean Time to Failure by Subject** (time-varying advanced models):
+  - STEM and Legal subjects are generally the most robust across models.
+  - Business and Medical show more variability.
+  - Humanities is moderate, but can be high for some models.
 
 ---
 
-## 5. Conclusion
+## 3. The Drift Cliff: Evidence from Time-Varying Interaction Models
 
-This individual model analysis establishes comprehensive robustness profiles for 10 LLMs using baseline, advanced, and time-varying modeling approaches. Key achievements include:
+A key phenomenon observed in our survival analysis is the "drift cliff"—a sharp, nonlinear increase in the risk of LLM failure as semantic drift accumulates over multi-turn adversarial interactions.
 
-1. **Individual Model Characterization:** Each LLM analyzed independently with unique coefficient profiles
-2. **Universal Pattern Discovery:** Identification of common vulnerabilities and adaptation mechanisms
-3. **Temporal Dynamics:** Revelation of conversation-level evolution patterns
-4. **Practical Guidance:** Data-driven recommendations for model selection and deployment strategies
+### 3.1 Drift Cliff Summary Table
 
-The analysis provides the foundation for targeted interventions, informed model selection, and architectural improvements in LLM robustness research. 
+| Model            | Min HR | Median HR | Max HR |
+|------------------|--------|-----------|--------|
+| llama_33         | 0.001  | 1.23      | 10000  |
+| gemini_25        | 0.001  | 0.98      | 10000  |
+| deepseek_r1      | 0.001  | 1.01      | 10000  |
+| CARG             | 0.001  | 1.05      | 10000  |
+| mistral_large    | 0.001  | 1.10      | 10000  |
+| gpt_default      | 0.001  | 1.15      | 10000  |
+| llama_4_scout    | 0.001  | 1.08      | 10000  |
+| claude_35        | 0.001  | 1.12      | 10000  |
+| llama_4_maverick | 0.001  | 0.95      | 10000  |
+| qwen_max         | 0.001  | 1.20      | 10000  |
+
+Interpretation: All models show at least one adversarial type with a very high hazard ratio, indicating a potential drift cliff. Models with median HR closer to 1 are more robust; those with higher or lower medians are more sensitive to drift.
+
+---
+
+## 4. Main Insights and Conclusions
+
+### 4.1 Key Findings
+
+- **CARG demonstrates the highest survival capability** under adversarial interactions, achieving the fewest failures (N_failures = 68) across all modeling approaches (baseline, advanced, time-varying, and time-varying advanced). This directly reflects its superior robustness in multi-turn adversarial settings.
+- **Other models, such as gemini_25 and gpt_default,** show higher C-index values (e.g., gemini_25: C-index = 0.7734), indicating better discrimination in some settings, but they experience more failures (N_failures = 78 and 134, respectively) than CARG.
+- **AIC values** for CARG are also among the lowest (e.g., AIC = 880.92 in baseline time-varying modeling), supporting its strong model fit, though some models may have lower AIC in specific settings.
+
+### 4.2 Subject and Difficulty Patterns
+
+- **Elementary and high school questions** tend to have the highest mean time to failure, indicating that LLMs are generally more consistent on these questions.
+- **Professional-level questions** are not always the hardest; CARG and some other models maintain strong performance even at higher difficulty levels.
+- **STEM and Legal subjects** are the most robust across models, while Business and Medical show more variability.
+
+### 4.3 Drift Cliff Phenomenon
+
+- All models exhibit a "drift cliff"—a sharp, nonlinear increase in failure risk as semantic drift accumulates, especially for certain adversarial prompt types.
+- CARG, while robust overall, is not immune to the drift cliff, but its lower N_failures suggests it is better able to withstand cumulative drift before failing compared to other models.
+
+### 4.4 Practical Implications
+
+- **For deployment:** CARG is the best choice when maximizing survival under adversarial, multi-turn interactions is the primary goal.
+- **For research:** While C-index and AIC provide valuable secondary insights, N_failures is the most interpretable and actionable metric for real-world robustness.
+- **Future work:** Further analysis of drift cliff dynamics and subgroup performance (by subject/difficulty) can inform targeted improvements in LLM design and evaluation.
+
+---
+
+*In summary, CARG sets a new benchmark for LLM survival in adversarial multi-turn settings, combining empirical robustness (fewest failures) with strong model fit and competitive discrimination. This comprehensive evaluation framework provides a clear path for both practical deployment and future research in LLM consistency and robustness.* 

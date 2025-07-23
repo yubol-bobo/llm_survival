@@ -16,6 +16,9 @@ os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
 # Load embedding model
 model_embed = SentenceTransformer(EMBEDDING_MODEL)
 
+# Load question metadata for subject/level info
+meta_df = pd.read_csv('raw data/cleaned_data_with_clusters.csv')
+
 def cosine_dist(a, b):
     if a is None or b is None:
         return None
@@ -75,6 +78,15 @@ for model in os.listdir(RAW_DATA_DIR):
                 all_assistant_msgs.append(msg['content'])
         prompt0_id = hash(prompt0) if prompt0 else None
         model_name = model
+        # --- Merge subject/difficulty info by row index ---
+        try:
+            meta_row = meta_df.iloc[int(conv_id)]
+            level = meta_row['level']
+            subject = meta_row['subject']
+            subject_cluster = meta_row['subject_cluster']
+        except Exception as e:
+            print(f"Metadata lookup failed for conv_id {conv_id}: {e}")
+            continue
         rounds = merged_csv.loc[int(conv_id)]
         # Convert all round values to indicator (0 or 1)
         round_indicators = []
@@ -142,6 +154,9 @@ for model in os.listdir(RAW_DATA_DIR):
             'avg_prompt_to_prompt_drift': np.nanmean([d for d in prompt_to_prompt_drifts[1:max_followup_round+1] if d is not None]) if len(prompt_to_prompt_drifts) > 1 else None,
             'avg_context_to_prompt_drift': np.nanmean([d for d in context_to_prompt_drifts[1:max_followup_round+1] if d is not None]) if len(context_to_prompt_drifts) > 1 else None,
             'avg_prompt_complexity': np.mean(prompt_complexities[1:max_followup_round+1]) if len(prompt_complexities) > 1 else None,
+            'level': level,
+            'subject': subject,
+            'subject_cluster': subject_cluster,
         })
         # Long table rows (only for rounds 1 to 8)
         for i in range(1, max_followup_round + 1):
@@ -161,6 +176,9 @@ for model in os.listdir(RAW_DATA_DIR):
                 'prompt_complexity': prompt_complexities[i] if i < len(prompt_complexities) else None,
                 'failure': failure,
                 'censored': 1 if (i == max_followup_round and censored == 1) else 0,
+                'level': level,
+                'subject': subject,
+                'subject_cluster': subject_cluster,
             })
 
     pd.DataFrame(static_rows).to_csv(os.path.join(out_dir, f'{model}_static.csv'), index=False)
