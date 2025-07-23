@@ -15,7 +15,7 @@
 
 **Methodology:** Individual Negative Binomial regression models fitted separately for each of the 10 LLMs to analyze conversation robustness.
 
-#### 1.1.1.1 Individual Model Count Performance Rankings (Ranked by N_failures)
+(Ranked by N_failures)
 
 | Rank | Model            | N_failures | C-index   | AIC        | N_conversations | Drift_coef | Drift_pval |
 |------|------------------|------------|-----------|------------|-----------------|------------|------------|
@@ -53,7 +53,7 @@
 
 ## 1.2 Advanced Modeling: Mixed Effects (Subject/Difficulty Frailty)
 
-### 1.2.1 Advanced Model Results (Ranked by N_failures)
+(Ranked by N_failures)
 
 | Rank | Model            | N_failures | Subject C-Index | Subject AIC | Subject Frailty Var | Difficulty C-Index | Difficulty AIC | Difficulty Frailty Var |
 |------|------------------|------------|-----------------|-------------|---------------------|--------------------|----------------|-----------------------|
@@ -71,7 +71,7 @@
 
 ## 1.3 Baseline Time-Varying Modeling
 
-### 1.3.1 Baseline Time-Varying Model Results (Ranked by N_failures)
+(Ranked by N_failures)
 
 | Rank | Model            | N_failures | C-index   | AIC    | N_turns |
 |------|------------------|------------|-----------|--------|---------|
@@ -89,7 +89,7 @@
 
 ## 1.4 Time-Varying Advanced Modeling (Interaction Model)
 
-### 1.4.1 Time-Varying Advanced Model Results (Ranked by N_failures)
+(Ranked by N_failures)
 
 | Rank | Model            | N_failures | C-index   | AIC    | N_turns |
 |------|------------------|------------|-----------|--------|---------|
@@ -126,7 +126,7 @@
 
 A key phenomenon observed in our survival analysis is the "drift cliff"—a sharp, nonlinear increase in the risk of LLM failure as semantic drift accumulates over multi-turn adversarial interactions.
 
-### 3.1 Drift Cliff Summary Table
+Drift Cliff Summary Table
 
 | Model            | Min HR | Median HR | Max HR |
 |------------------|--------|-----------|--------|

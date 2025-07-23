@@ -24,6 +24,7 @@ This document outlines the experimental pipeline for evaluating the consistency 
   - If an LLM maintains correctness for all 8 rounds, the conversation is censored (survived all rounds).
 - **Purpose:**
   - This filtering ensures that only initially robust LLM responses are evaluated for consistency under continued adversarial pressure.
+  - All models are evaluated on the same set of filtered conversations for a fair and rigorous comparison.
 
 ---
 
@@ -76,22 +77,30 @@ This document outlines the experimental pipeline for evaluating the consistency 
 
 ---
 
-## 6. Visualization and Interpretation
+## 6. Evaluation Metrics and Reporting
 
-- **Professional Plots:**
-  - Bar plots, scatter plots, and coefficient visualizations summarize key metrics (C-index, drift, AIC, etc.) for each LLM.
-  - Color coding and significance annotations highlight robust vs. vulnerable models and effects.
-- **Integration:**
-  - Visualizations and statistical summaries are integrated in `results.md` for clear communication of findings.
+- **Primary Metric:**
+  - The number of failures (N_failures) is used as the main ranking criterion for LLM robustness. This directly measures the survival capability of each model under adversarial, multi-turn interactions.
+- **Supporting Metrics:**
+  - C-index (model discrimination) and AIC (model fit) are reported for context and transparency, but are not used for primary ranking.
+- **Reporting:**
+  - All results tables are ranked by N_failures (ascending, fewer failures is better). CARG, as the proposed method, is highlighted in all comparisons.
+  - This approach ensures that the evaluation is directly aligned with the practical goal of maximizing LLM survival.
 
 ---
 
-## 6. Complementarity and Insights
+## 7. Subject, Difficulty, and Drift Cliff Analyses
 
-- **Pipeline Synergy:**
-  - Data filtering ensures only meaningful, comparable cases are analyzed.
-  - Baseline models provide interpretable, model-level summaries.
-  - Advanced and time-varying models reveal dynamic, context-dependent vulnerabilities.
-  - Visualizations synthesize complex results for actionable insights.
-- **Overall Goal:**
-  - To robustly characterize LLM consistency and drift in adversarial, multi-turn settings, informing both model development and deployment strategies. 
+- **Subgroup Analysis:**
+  - The pipeline includes stratified analyses by subject and difficulty level, using the most comprehensive (time-varying advanced) models. This reveals which content areas are most/least robust for each LLM.
+  - Elementary and high school questions tend to have the highest mean time to failure, while STEM and Legal subjects are generally the most robust.
+- **Drift Cliff:**
+  - The “drift cliff” phenomenon—a sharp, nonlinear increase in failure risk as semantic drift accumulates—is quantified and visualized for each model. CARG, while robust overall, is not immune to the drift cliff, but its lower N_failures suggests it is better able to withstand cumulative drift before failing compared to other models.
+
+---
+
+## 8. Summary of Pipeline Strengths
+
+- The pipeline ensures a fair, rigorous, and interpretable comparison of LLMs, with a focus on real-world survival under adversarial conditions.
+- By ranking models by N_failures and providing rich subgroup and temporal analyses, the framework supports both practical deployment decisions and future research directions.
+- CARG, as the proposed method, sets a new benchmark for LLM survival in adversarial multi-turn settings, combining empirical robustness (fewest failures) with strong model fit and competitive discrimination. 
