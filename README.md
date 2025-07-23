@@ -4,6 +4,8 @@
 
 This project provides a **comprehensive individual model analysis** of Large Language Model (LLM) robustness using advanced survival analysis methods. The analysis evaluates **each LLM independently** with baseline Cox models, stratified/frailty analyses, and time-varying models to understand model-specific conversation breakdown patterns and coefficient profiles.
 
+> **CARG is the proposed method in this study.** All models are evaluated on the same filtered set of conversations (only those with round_0 == 1, and only rounds 1–8 are analyzed) to ensure a fair, rigorous comparison of survival capability under adversarial interactions.
+
 ## 🎯 Key Features
 
 - **🤖 Individual Model Focus:** Each LLM analyzed independently with dedicated modeling
@@ -13,6 +15,7 @@ This project provides a **comprehensive individual model analysis** of Large Lan
 - **⏰ Temporal Analysis:** Turn-by-turn drift evolution and vulnerability windows
 - **📁 Clean Pipeline:** Individual model analysis from data to model-specific results
 - **🎨 Individual Visualizations:** Per-model plots and comparative individual performance
+- **🛡️ Survival Ranking by N_failures:** All results tables are ranked by the number of failures (N_failures, ascending), directly reflecting LLM robustness. C-index and AIC are included as supporting metrics.
 
 ---
 
@@ -84,7 +87,7 @@ pip install lifelines sentence-transformers
 
 ## 🚀 Complete Analysis Pipeline
 
-> **Note:** All scripts should be run from the project root directory for correct data loading.
+> **Note:** All scripts should be run from the project root directory for correct data loading. All models are evaluated on the same filtered set of conversations (round_0 == 1, rounds 1–8).
 
 ### **Phase 1: Data Processing**
 
@@ -168,6 +171,8 @@ python modeling/time_varying_frailty_modeling.py
 
 - All outputs are saved in `generated/outputs/` (CSVs, JSONs, Markdown) and `generated/figs/` (visualizations).
 - See `results.md` for a summary of findings and statistical interpretations.
+- **All results tables are ranked by N_failures (ascending, fewer failures = better survival). C-index and AIC are included for context.**
+- **CARG achieves the fewest failures and sets a new benchmark for LLM survival under adversarial interactions.**
 - See `individual_model_coefficient_report.md` for detailed coefficient tables.
 
 ---
@@ -184,11 +189,15 @@ python modeling/time_varying_frailty_modeling.py
 
 ## 📚 Understanding the Results
 
+- **N_failures (number of failures) is the primary metric for ranking LLM robustness.**
+- **CARG is the most robust model by this metric.**
 - **Prompt-to-prompt drift** is the dominant risk factor for conversation failure in all models.
 - **Cumulative drift** is universally protective (adaptation effect).
 - **Context drift** is model-dependent, sometimes highly significant.
 - **Stratification and frailty** reveal unobserved heterogeneity by subject and difficulty.
 - **Temporal analysis** shows adaptation and vulnerability windows across conversation turns.
+- **Drift cliff analysis** reveals sharp, nonlinear increases in failure risk as semantic drift accumulates, especially for certain adversarial prompt types.
+- **Subject and difficulty analyses** show which content areas are most/least robust for each LLM.
 
 ---
 
