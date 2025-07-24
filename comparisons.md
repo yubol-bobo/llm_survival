@@ -10,6 +10,18 @@ This document provides a structured comparison of four modeling strategies used 
 - Fits standard statistical models (Negative Binomial regression, Cox Proportional Hazards) to each LLM independently.
 - Assumes all data points are independent; does not account for repeated measures or hierarchical structure.
 
+**Formula:**
+- **Negative Binomial Regression:**
+  \[
+  \log(\mathbb{E}[Y_i]) = \beta_0 + \beta_1 X_{i1} + \cdots + \beta_p X_{ip}
+  \]
+  where \(Y_i\) is the count of survived turns for conversation \(i\), and \(X_{ij}\) are covariates (e.g., drift, prompt type).
+- **Cox Proportional Hazards:**
+  \[
+  h_i(t) = h_0(t) \exp(\beta_1 X_{i1} + \cdots + \beta_p X_{ip})
+  \]
+  where \(h_i(t)\) is the hazard for conversation \(i\) at time (turn) \(t\).
+
 **Strengths:**
 - Simple, interpretable, and computationally efficient.
 - Provides high-level summaries and enables straightforward model-to-model comparisons.
@@ -26,6 +38,17 @@ This document provides a structured comparison of four modeling strategies used 
 **Approach:**
 - Extends baseline models by incorporating random effects (mixed effects) for clusters such as question, subject, or prompt type.
 - Models the hierarchical and repeated-measures structure of the data.
+
+**Formula:**
+- **Mixed Effects Cox Model:**
+  \[
+  h_{ij}(t) = h_0(t) \exp(\beta_1 X_{ij1} + \cdots + \beta_p X_{ijp} + b_j)
+  \]
+  where \(b_j \sim N(0, \sigma^2)\) is a random effect for cluster (e.g., subject, question) \(j\).
+- **Mixed Effects Negative Binomial:**
+  \[
+  \log(\mathbb{E}[Y_{ij}]) = \beta_0 + \beta_1 X_{ij1} + \cdots + \beta_p X_{ijp} + b_j
+  \]
 
 **Strengths:**
 - Accounts for unobserved heterogeneity and latent group-level effects.
@@ -45,6 +68,13 @@ This document provides a structured comparison of four modeling strategies used 
 - Uses Cox models with time-varying covariates to allow effects (e.g., drift, prompt type) to change at each turn.
 - Models the dynamic evolution of risk as the conversation progresses.
 
+**Formula:**
+- **Time-Varying Cox Model:**
+  \[
+  h_i(t) = h_0(t) \exp(\beta_1(t) X_{i1}(t) + \cdots + \beta_p(t) X_{ip}(t))
+  \]
+  where covariates \(X_{ij}(t)\) and/or coefficients \(\beta_j(t)\) can change with turn \(t\).
+
 **Strengths:**
 - Captures temporal patterns and adaptation (or degradation) in LLM consistency.
 - Provides nuanced understanding of when and why LLMs fail in multi-turn settings.
@@ -62,6 +92,13 @@ This document provides a structured comparison of four modeling strategies used 
 **Approach:**
 - Combines time-varying covariates with mixed effects and interaction terms.
 - Models both the dynamic and hierarchical structure of the data, as well as higher-order interactions.
+
+**Formula:**
+- **Time-Varying Mixed Effects Cox Model with Interactions:**
+  \[
+  h_{ij}(t) = h_0(t) \exp\left(\sum_k \beta_k(t) X_{ijk}(t) + \sum_{l,m} \gamma_{lm}(t) X_{ijl}(t) X_{ijm}(t) + b_j\right)
+  \]
+  where \(b_j\) is a random effect for cluster \(j\), and interaction terms \(\gamma_{lm}(t)\) allow for context-dependent, time-varying effects.
 
 **Strengths:**
 - Most comprehensive and realistic modeling of LLM performance in adversarial, multi-turn scenarios.
