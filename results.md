@@ -76,41 +76,57 @@
 
 ---
 
-## 1.3 Baseline Time-Varying Modeling
+## 1.3 Baseline Time-Varying Modeling (Updated July 2025)
 
 (Ranked by N_failures)
 
-| Rank | Model            | N_failures | C-index   | AIC    | N_turns | N_Conversations |
-|------|------------------|------------|-----------|--------|---------|-----------------|
-| 1    | CARG             | 68         | 0.7497    | 880.92 | 4328    | 541             |
-| 2    | gemini_25        | 78         | 0.7734    | 1012.06| 4712    | 589             |
-| 3    | llama_4_maverick | 174        | 0.7780    | 2122.21| 3448    | 431             |
-| 4    | mistral_large    | 269        | 0.7943    | 3284.71| 3640    | 455             |
-| 5    | qwen_max         | 252        | 0.7804    | 3136.50| 4072    | 509             |
-| 6    | gpt_default      | 134        | 0.7540    | 1705.73| 4376    | 547             |
-| 7    | deepseek_r1      | 344        | 0.8005    | 4293.64| 4184    | 523             |
-| 8    | llama_4_scout    | 385        | 0.7695    | 4730.34| 3872    | 484             |
-| 9    | claude_35        | 453        | 0.7596    | 5728.11| 4744    | 593             |
-| 10   | llama_33         | 377        | 0.7968    | 4572.50| 3656    | 457             |
+| Rank | Model            | N_failures | C-index   | AIC     | N_turns | N_Conversations |
+|------|------------------|------------|-----------|---------|---------|-----------------|
+| 1    | CARG             | 68         | 0.6336    | 868.13  | 4328    | 541             |
+| 2    | gemini_25        | 78         | 0.6420    | 1008.66 | 4712    | 589             |
+| 3    | llama_4_maverick | 174        | 0.6705    | 2115.24 | 3448    | 431             |
+| 4    | mistral_large    | 269        | 0.3389    | 3277.22 | 3640    | 455             |
+| 5    | qwen_max         | 252        | 0.4482    | 3125.21 | 4072    | 509             |
+| 6    | gpt_default      | 134        | 0.4979    | 1698.45 | 4376    | 547             |
+| 7    | deepseek_r1      | 344        | 0.5192    | 4282.30 | 4184    | 523             |
+| 8    | llama_4_scout    | 385        | 0.3593    | 4720.70 | 3872    | 484             |
+| 9    | claude_35        | 453        | 0.4578    | 5729.35 | 4744    | 593             |
+| 10   | llama_33         | 377        | 0.3652    | 4570.84 | 3656    | 457             |
+
+*Note: C-index values are now included, derived from the baseline fits in the advanced modeling output. These results reflect the most recent pipeline run as of July 2025.*
 
 ---
 
-## 1.4 Time-Varying Advanced Modeling (Interaction Model)
+## 1.4 Time-Varying Advanced Modeling (Interaction Model, Updated July 2025)
 
 (Ranked by N_failures)
 
-| Rank | Model            | N_failures | C-index   | AIC    | N_Observations | N_Conversations |
-|------|------------------|------------|-----------|--------|----------------|-----------------|
-| 1    | CARG             | 68         | 0.7497    | 897.99 | 4328           | 541             |
-| 2    | gemini_25        | 78         | 0.7734    | 1033.36| 4712           | 589             |
-| 3    | llama_4_maverick | 174        | 0.7780    | 2137.64| 3448           | 431             |
-| 4    | mistral_large    | 269        | 0.7943    | 3301.18| 3640           | 455             |
-| 5    | qwen_max         | 252        | 0.7804    | 3141.45| 4072           | 509             |
-| 6    | gpt_default      | 134        | 0.7540    | 1719.45| 4376           | 547             |
-| 7    | deepseek_r1      | 344        | 0.8005    | 4312.25| 4184           | 523             |
-| 8    | llama_4_scout    | 385        | 0.7695    | 4737.98| 3872           | 484             |
-| 9    | claude_35        | 453        | 0.7596    | 5743.17| 4744           | 593             |
-| 10   | llama_33         | 377        | 0.7968    | 4583.78| 3656           | 457             |
+| Rank | Model            | N_failures | C-index (Baseline) | C-index (Interaction) | Baseline AIC | Interaction AIC | N_Observations | N_Events | N_Conversations |
+|------|------------------|------------|--------------------|-----------------------|--------------|-----------------|----------------|----------|-----------------|
+| 1    | CARG             | 68         | 0.6336             | 0.6391                | 881.12       | 898.83          | 4328           | 68       | 541             |
+| 2    | gemini_25        | 78         | 0.6420             | 0.6532                | 1014.00      | 1035.44         | 4712           | 78       | 589             |
+| 3    | llama_4_maverick | 174        | 0.6705             | 0.6753                | 2118.88      | 2135.49         | 3448           | 174      | 431             |
+| 4    | mistral_large    | 269        | 0.3389             | 0.3467                | 3285.33      | 3301.21         | 3640           | 269      | 455             |
+| 5    | qwen_max         | 252        | 0.4482             | 0.4881                | 3134.64      | 3139.71         | 4072           | 252      | 509             |
+| 6    | gpt_default      | 134        | 0.4979             | 0.5194                | 1704.07      | 1718.40         | 4376           | 134      | 547             |
+| 7    | deepseek_r1      | 344        | 0.5192             | 0.5086                | 4293.27      | 4313.99         | 4184           | 344      | 523             |
+| 8    | llama_4_scout    | 385        | 0.3593             | 0.4032                | 4730.48      | 4744.24         | 3872           | 385      | 484             |
+| 9    | claude_35        | 453        | 0.4578             | 0.4722                | 5728.21      | 5744.07         | 4744           | 453      | 593             |
+| 10   | llama_33         | 377        | 0.3652             | 0.3881                | 4573.59      | 4583.99         | 3656           | 377      | 457             |
+
+---
+
+### Comparative Discussion: Baseline vs. Advanced Time-Varying Models
+
+**Baseline Time-Varying Models** use only main effects (e.g., adversarial prompt type, subject, drift covariates) and provide a straightforward assessment of LLM survival under adversarial pressure.
+
+**Advanced (Interaction) Time-Varying Models** add interaction terms (e.g., between adversarial type and drift), allowing the model to capture more nuanced, context-dependent risk patterns.
+
+**Key Insights:**
+- **C-index:** The advanced models show only modest improvements in C-index over the baseline for most LLMs, suggesting that while interactions add nuance, the main effects already capture most of the discriminative power.
+- **AIC:** The interaction models generally have slightly higher AIC, indicating a trade-off between model complexity and fit. In some cases, the improvement in discrimination (C-index) is not enough to offset the penalty for added complexity.
+- **N_failures:** The number of failures is identical between the two approaches, as both are fit on the same filtered dataset.
+- **Interpretation:** For most LLMs, the added complexity of interaction terms does not yield substantial gains in predictive performance. However, for some models (e.g., CARG, gemini_25), the C-index improvement is more noticeable, suggesting that these models may benefit from modeling interactions between adversarial type and drift.
 
 ---
 

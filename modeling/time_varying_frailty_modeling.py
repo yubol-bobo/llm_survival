@@ -18,11 +18,13 @@ from lifelines import CoxTimeVaryingFitter
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings('ignore')
+from lifelines.utils import concordance_index
 
 class TimeVaryingFrailtyAnalyzer:
     def __init__(self):
         self.models_data = {}
         self.results = {}
+        self.cindex_results = {}  # NEW: Store C-index for each model
 
     def load_and_prepare_data(self):
         """Load and prepare data for time-varying analysis."""
@@ -126,6 +128,14 @@ class TimeVaryingFrailtyAnalyzer:
                             formula=formula
                         )
                         summary = ctv.summary
+                        # Compute C-index manually
+                        risk_scores = ctv.predict_partial_hazard(df)
+                        c_index = concordance_index(
+                            df['turn_stop'],
+                            -risk_scores,
+                            df['fail']
+                        )
+                        self.cindex_results[model_name] = c_index
                         print(f"    ✅ Successfully converged with formula: {formula}")
                         break 
                     except Exception as e:
@@ -163,8 +173,16 @@ class TimeVaryingFrailtyAnalyzer:
         
         output_file = '../generated/outputs/time_varying_frailty_model_results.csv'
         combined_results.to_csv(output_file)
-        
         print(f"✅ All model results saved to: {output_file}")
+
+        # NEW: Save C-index values
+        if self.cindex_results:
+            cindex_df = pd.DataFrame([
+                {'Model': k, 'C_index': v} for k, v in self.cindex_results.items()
+            ])
+            cindex_file = '../generated/outputs/time_varying_frailty_cindex.csv'
+            cindex_df.to_csv(cindex_file, index=False)
+            print(f"✅ C-index values saved to: {cindex_file}")
         return output_file
 
     def visualize_hazard_ratios(self, results_file):

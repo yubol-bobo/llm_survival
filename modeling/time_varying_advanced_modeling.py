@@ -30,6 +30,7 @@ from lifelines import CoxTimeVaryingFitter
 from tqdm import tqdm
 import warnings
 import json
+import lifelines.utils
 warnings.filterwarnings('ignore')
 
 class TimeVaryingAdvancedAnalyzer:
@@ -136,7 +137,13 @@ class TimeVaryingAdvancedAnalyzer:
                     stop_col="turn_stop",
                     formula=baseline_formula
                 )
-                
+                # Compute C-index manually
+                risk_scores = ctv.predict_partial_hazard(df)
+                c_index = lifelines.utils.concordance_index(
+                    df['turn_stop'],
+                    -risk_scores,
+                    df['fail']
+                )
                 self.baseline_results[model_name] = {
                     'summary': ctv.summary,
                     'formula': baseline_formula,
@@ -144,7 +151,8 @@ class TimeVaryingAdvancedAnalyzer:
                     'log_likelihood': ctv.log_likelihood_,
                     'n_observations': len(df),
                     'n_events': df['fail'].sum(),
-                    'n_conversations': df['convo_id'].nunique()
+                    'n_conversations': df['convo_id'].nunique(),
+                    'cindex': c_index
                 }
                 
                 print(f"    ✅ Baseline converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
@@ -176,7 +184,15 @@ class TimeVaryingAdvancedAnalyzer:
                     stop_col="turn_stop",
                     formula=interaction_formula
                 )
-                
+                # For interaction models, after fitting:
+                # ctv.fit(...)
+                # ...
+                risk_scores = ctv.predict_partial_hazard(df)
+                c_index = lifelines.utils.concordance_index(
+                    df['turn_stop'],
+                    -risk_scores,
+                    df['fail']
+                )
                 self.interaction_results[model_name] = {
                     'summary': ctv.summary,
                     'formula': interaction_formula,
@@ -185,7 +201,8 @@ class TimeVaryingAdvancedAnalyzer:
                     'n_observations': len(df),
                     'n_events': df['fail'].sum(),
                     'n_conversations': df['convo_id'].nunique(),
-                    'model_object': ctv  # Store for detailed analysis
+                    'model_object': ctv,  # Store for detailed analysis
+                    'cindex': c_index
                 }
                 
                 print(f"    ✅ Interaction model converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
@@ -226,7 +243,8 @@ class TimeVaryingAdvancedAnalyzer:
                         'n_events': df['fail'].sum(),
                         'n_conversations': df['convo_id'].nunique(),
                         'model_object': ctv_simple,
-                        'note': 'Simplified interaction model used'
+                        'note': 'Simplified interaction model used',
+                        'cindex': ctv_simple.concordance_index_  # NEW: Save C-index
                     }
                     print(f"    ✅ Simplified interaction model converged. Log-likelihood: {ctv_simple.log_likelihood_:.2f}")
                     
@@ -373,11 +391,21 @@ class TimeVaryingAdvancedAnalyzer:
             pd.DataFrame(interaction_effects).to_csv('generated/outputs/interaction_effects_summary.csv', index=False)
             print("✅ Interaction effects summary saved")
         
-        print("\n📁 Generated files:")
-        print("   • baseline_time_varying_results.csv")
-        print("   • interaction_time_varying_results.csv")
-        print("   • model_comparison_time_varying.csv")
-        print("   • interaction_effects_summary.csv")
+        # NEW: Save C-index for all models
+        cindex_rows = []
+        for model_name in self.baseline_results:
+            base = self.baseline_results.get(model_name)
+            inter = self.interaction_results.get(model_name)
+            cindex_rows.append({
+                'Model': model_name,
+                'C_index_Baseline': base['cindex'] if base else np.nan,
+                'C_index_Interaction': inter['cindex'] if inter else np.nan
+            })
+        if cindex_rows:
+            cindex_df = pd.DataFrame(cindex_rows)
+            cindex_file = 'generated/outputs/time_varying_advanced_cindex.csv'
+            cindex_df.to_csv(cindex_file, index=False)
+            print(f"✅ C-index values saved to: {cindex_file}")
 
     def create_visualizations(self):
         """Create visualizations of interaction effects."""
