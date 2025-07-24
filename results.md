@@ -173,3 +173,39 @@ Interpretation: All models show at least one adversarial type with a very high h
 ---
 
 *In summary, CARG sets a new benchmark for LLM survival in adversarial multi-turn settings, combining empirical robustness (fewest failures) with strong model fit and competitive discrimination. This comprehensive evaluation framework provides a clear path for both practical deployment and future research in LLM consistency and robustness.* 
+
+## 5. Deeper Insights from Survival Modeling
+
+### 5.1 The Importance of Prompt Type
+- **Prompt type is a critical determinant of LLM survival.** Interaction terms in time-varying advanced models show that certain adversarial prompt types can dramatically increase the risk of failure (the “drift cliff” effect).
+- Some models are robust to most prompt types but have specific vulnerabilities, highlighting the need for diverse adversarial evaluation.
+
+### 5.2 The Importance of Drift Degree
+- **Prompt-to-prompt drift is the strongest predictor of failure** across all models, with large and often highly significant hazard ratios.
+- **Cumulative drift** is frequently protective, suggesting adaptation or stabilization as conversations progress.
+- **Context-to-prompt drift** is significant for some models, indicating model-specific sensitivity to context changes.
+
+### 5.3 What Makes a Model Survive or Fail?
+- **Survival factors:**
+  - Low prompt-to-prompt drift (semantic consistency across turns)
+  - Robustness to a wide range of adversarial prompt types
+  - Adaptation to cumulative drift (improved survival over time)
+  - Consistent performance across subjects and difficulty levels
+- **Failure factors:**
+  - High prompt-to-prompt drift (swaying from the original answer)
+  - Vulnerability to specific adversarial strategies
+  - Lack of adaptation or degradation over multiple turns
+
+### 5.4 Model-Specific Patterns
+- **CARG** achieves the fewest failures, indicating strong overall survival and resilience to both drift and prompt type.
+- Some models (e.g., gemini_25) have higher C-index but more failures, suggesting good risk ranking but lower absolute survival.
+- Subgroup analysis shows that some models are robust on easy questions but fail on professional or STEM prompts, or vice versa.
+
+### 5.5 Practical and Theoretical Implications
+- **For deployment:** Select models with the lowest N_failures for adversarial, multi-turn applications; monitor for prompt types and drift patterns that cause failures.
+- **For model development:** Focus on reducing prompt-to-prompt drift and hardening against specific adversarial strategies; consider training on high-drift, diverse prompt sequences.
+- **For research:** Survival analysis reveals richer, more realistic LLM robustness patterns than single-turn accuracy; the interplay of drift, prompt type, and architecture is a key area for future work.
+
+---
+
+*These deeper insights provide actionable guidance for both practical deployment and future research, highlighting the nuanced, context-dependent nature of LLM survival in adversarial multi-turn settings.* 

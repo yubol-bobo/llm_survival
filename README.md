@@ -208,4 +208,3 @@ python modeling/time_varying_frailty_modeling.py
 
 ---
 
-*Last updated: 2024 | Analysis Pipeline Version 2.0* 
