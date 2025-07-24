@@ -57,6 +57,8 @@
 
 (Ranked by N_failures)
 
+### 1.2.1 Advanced Model Results (Ranked by N_failures)
+
 | Rank | Model            | N_failures | Subject C-Index | Subject AIC | Subject Frailty Var | Difficulty C-Index | Difficulty AIC | Difficulty Frailty Var |
 |------|------------------|------------|-----------------|-------------|---------------------|--------------------|----------------|-----------------------|
 | 1    | CARG             | 68         | 0.7493          | 415.97      | 0.00006             | 0.7515             | 464.66         | 0.00006               |
@@ -69,23 +71,27 @@
 | 8    | mistral_large    | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
 | 9    | qwen_max         | 0.7538          | 717.07      | 0.0002              | 0.7527             | 464.66         | 0.00006               |
 
+**Interpretation:**
+> Empty or near-zero values for "Difficulty Frailty Var" indicate that, for those models, difficulty level does not explain additional variation in survival after accounting for other covariates. This means the model's performance is relatively homogeneous across difficulty levels, and difficulty is not a major driver of survival/failure for those LLMs in this dataset. This is a valid and interpretable outcome, and should be reported as such.
+
 ---
 
 ## 1.3 Baseline Time-Varying Modeling
 
 (Ranked by N_failures)
 
-| Rank | Model            | N_failures | C-index   | AIC    | N_turns |
-|------|------------------|------------|-----------|--------|---------|
-| 1    | CARG             | 68         | 0.7497    | 880.92 | 4328    |
-| 2    | gemini_25        | 78         | 0.7734    | 1012.06| 4712    |
-| 3    | gpt_default      | 134        | 0.7540    | 1705.73| 4376    |
-| 4    | deepseek_r1      | 344        | 0.8005    | 4293.64| 4184    |
-| 5    | mistral_large    | 269        | 0.7943    | 3284.71| 3640    |
-| 6    | qwen_max         | 252        | 0.7804    | 3136.50| 4072    |
-| 7    | llama_4_maverick | 174        | 0.7780    | 2122.21| 3448    |
-| 8    | llama_4_scout    | 385        | 0.7695    | 4730.34| 3872    |
-| 9    | claude_35        | 453        | 0.7596    | 5728.11| 4744    |
+| Rank | Model            | N_failures | C-index   | AIC    | N_turns | N_Conversations |
+|------|------------------|------------|-----------|--------|---------|-----------------|
+| 1    | CARG             | 68         | 0.7497    | 880.92 | 4328    | 541             |
+| 2    | gemini_25        | 78         | 0.7734    | 1012.06| 4712    | 589             |
+| 3    | llama_4_maverick | 174        | 0.7780    | 2122.21| 3448    | 431             |
+| 4    | mistral_large    | 269        | 0.7943    | 3284.71| 3640    | 455             |
+| 5    | qwen_max         | 252        | 0.7804    | 3136.50| 4072    | 509             |
+| 6    | gpt_default      | 134        | 0.7540    | 1705.73| 4376    | 547             |
+| 7    | deepseek_r1      | 344        | 0.8005    | 4293.64| 4184    | 523             |
+| 8    | llama_4_scout    | 385        | 0.7695    | 4730.34| 3872    | 484             |
+| 9    | claude_35        | 453        | 0.7596    | 5728.11| 4744    | 593             |
+| 10   | llama_33         | 377        | 0.7968    | 4572.50| 3656    | 457             |
 
 ---
 
@@ -93,17 +99,18 @@
 
 (Ranked by N_failures)
 
-| Rank | Model            | N_failures | C-index   | AIC    | N_turns |
-|------|------------------|------------|-----------|--------|---------|
-| 1    | CARG             | 68         | 0.7497    | 897.99 | 4328    |
-| 2    | gemini_25        | 78         | 0.7734    | 1033.36| 4712    |
-| 3    | gpt_default      | 134        | 0.7540    | 1719.45| 4376    |
-| 4    | deepseek_r1      | 344        | 0.8005    | 4312.25| 4184    |
-| 5    | mistral_large    | 269        | 0.7943    | 3301.18| 3640    |
-| 6    | qwen_max         | 252        | 0.7804    | 3141.45| 4072    |
-| 7    | llama_4_maverick | 174        | 0.7780    | 2137.64| 3448    |
-| 8    | llama_4_scout    | 385        | 0.7695    | 4737.98| 3872    |
-| 9    | claude_35        | 453        | 0.7596    | 5743.17| 4744    |
+| Rank | Model            | N_failures | C-index   | AIC    | N_Observations | N_Conversations |
+|------|------------------|------------|-----------|--------|----------------|-----------------|
+| 1    | CARG             | 68         | 0.7497    | 897.99 | 4328           | 541             |
+| 2    | gemini_25        | 78         | 0.7734    | 1033.36| 4712           | 589             |
+| 3    | llama_4_maverick | 174        | 0.7780    | 2137.64| 3448           | 431             |
+| 4    | mistral_large    | 269        | 0.7943    | 3301.18| 3640           | 455             |
+| 5    | qwen_max         | 252        | 0.7804    | 3141.45| 4072           | 509             |
+| 6    | gpt_default      | 134        | 0.7540    | 1719.45| 4376           | 547             |
+| 7    | deepseek_r1      | 344        | 0.8005    | 4312.25| 4184           | 523             |
+| 8    | llama_4_scout    | 385        | 0.7695    | 4737.98| 3872           | 484             |
+| 9    | claude_35        | 453        | 0.7596    | 5743.17| 4744           | 593             |
+| 10   | llama_33         | 377        | 0.7968    | 4583.78| 3656           | 457             |
 
 ---
 
