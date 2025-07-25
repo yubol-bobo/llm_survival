@@ -238,3 +238,32 @@ Interpretation: All models show at least one adversarial type with a very high h
 ---
 
 *These deeper insights provide actionable guidance for both practical deployment and future research, highlighting the nuanced, context-dependent nature of LLM survival in adversarial multi-turn settings.* 
+
+#### Time-Varying Frailty Model (Fixed Effects)
+| Model            | C-index |
+|------------------|---------|
+| llama_33         | 0.795   |
+| gemini_25        | 0.910   |
+| deepseek_r1      | 0.824   |
+| CARG             | 0.815   |
+| mistral_large    | 0.788   |
+| gpt_default      | 0.847   |
+| llama_4_scout    | 0.779   |
+| claude_35        | 0.823   |
+| llama_4_maverick | 0.790   |
+| qwen_max         | 0.812   |
+
+#### Time-Varying Advanced Model (With Interactions)
+| Model            | C-index (Baseline) | C-index (Interaction) |
+|------------------|--------------------|-----------------------|
+| llama_33         | 0.647              | 0.678                 |
+| gemini_25        | 0.908              | 0.929                 |
+| deepseek_r1      | 0.749              | 0.803                 |
+| CARG             | 0.900              | 0.876                 |
+| mistral_large    | 0.634              | 0.650                 |
+| gpt_default      | 0.753              | 0.771                 |
+| llama_4_scout    | 0.610              | 0.707                 |
+| claude_35        | 0.737              | 0.743                 |
+| llama_4_maverick | 0.947              | 0.915                 |
+| qwen_max         | 0.715              | 0.762                 |
+
