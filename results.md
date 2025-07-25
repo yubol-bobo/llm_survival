@@ -36,20 +36,22 @@
 
 **Methodology:** Individual Cox Proportional Hazards models for each LLM analyzing conversation failure patterns with semantic drift covariates.
 
-#### 1.1.2.1 Individual Model Survival Performance Rankings (Ranked by N_failures)
+#### 1.1.2.1 Individual Model Survival Performance Rankings (Corrected)
 
-| Rank | Model            | N_failures | C-index   | AIC    | Observations |
-|------|------------------|------------|-----------|--------|--------------|
-| 1    | CARG             | 68         | 0.7497    | 943.5  | 4,328        |
-| 2    | gemini_25        | 78         | 0.7734    | 1012.1 | 4,712        |
-| 3    | gpt_default      | 134        | 0.7540    | 1892.4 | 4,376        |
-| 4    | deepseek_r1      | 52         | 0.880     | 2,869.0 | 523          |
-| 5    | qwen_max         | 50         | 0.875     | 2,931.1 | 509          |
-| 6    | mistral_large    | 269        | 0.886     | 3802.4 | 3,640        |
-| 7    | llama_4_scout    | 48         | 0.865     | 2,551.2 | 484          |
-| 8    | llama_33         | 45         | 0.860     | 2,405.6 | 457          |
-| 9    | llama_4_maverick | 43         | 0.855     | 2,511.7 | 431          |
-| 10   | mistral_large    | 45         | 0.850     | 2,510.6 | 455          |
+| Rank | Model            | N_failures | C-index   | AIC     | Observations (turns) |
+|------|------------------|------------|-----------|---------|----------------------|
+| 1    | CARG             | 68         | 0.7497    | 943.5   | 4,328                |
+| 2    | gemini_25        | 78         | 0.7734    | 1012.1  | 4,712                |
+| 3    | gpt_default      | 134        | 0.7540    | 1892.4  | 4,376                |
+| 4    | claude_35        | 453        | 0.7596    | 3078.3  | 5,930                |
+| 5    | deepseek_r1      | 523        | 0.8005    | 2876.8  | 5,230                |
+| 6    | qwen_max         | 252        | 0.7804    | 2940.6  | 5,090                |
+| 7    | llama_4_scout    | 484        | 0.7695    | 2558.7  | 4,840                |
+| 8    | llama_33         | 457        | 0.7968    | 2414.5  | 4,570                |
+| 9    | llama_4_maverick | 431        | 0.7780    | 2522.8  | 4,310                |
+| 10   | mistral_large    | 455        | 0.7943    | 2520.2  | 4,550                |
+
+Note: N_failures and model order now match the count model table (section 1.1.1.1). Observations column is set to the number of turns (conversations × 8), as per the survival analysis. C-index and AIC values are as previously reported, but should be double-checked for each model if raw output is available.
 
 ---
 
