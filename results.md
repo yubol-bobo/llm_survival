@@ -105,16 +105,16 @@ Note: N_failures and model order now match the count model table (section 1.1.1.
 #### Time-Varying Advanced Model (With Interactions)
 | Model            | C-index (Baseline) | C-index (Interaction) | AIC (Baseline) | AIC (Interaction) | N_Observations |
 |------------------|--------------------|-----------------------|----------------|-------------------|---------------|
-| llama_33         | 0.647              | 0.678                 | 4573.20        | 4588.00           | 3656          |
 | gemini_25        | 0.908              | 0.929                 | 1013.57        | 1033.08           | 4712          |
-| deepseek_r1      | 0.749              | 0.803                 | 4294.11        | 4312.75           | 4184          |
+| llama_4_maverick | 0.947              | 0.915                 | 2122.33        | 2135.54           | 3448          |
 | CARG             | 0.900              | 0.876                 | 880.15         | 897.12            | 4328          |
-| mistral_large    | 0.634              | 0.650                 | 3285.32        | 3300.91           | 3640          |
+| deepseek_r1      | 0.749              | 0.803                 | 4294.11        | 4312.75           | 4184          |
 | gpt_default      | 0.753              | 0.771                 | 1705.30        | 1721.39           | 4376          |
+| qwen_max         | 0.715              | 0.762                 | 3136.91        | 3143.37           | 4072          |
 | llama_4_scout    | 0.610              | 0.707                 | 4730.23        | 4746.21           | 3872          |
 | claude_35        | 0.737              | 0.743                 | 5727.95        | 5743.85           | 4744          |
-| llama_4_maverick | 0.947              | 0.915                 | 2122.33        | 2135.54           | 3448          |
-| qwen_max         | 0.715              | 0.762                 | 3136.91        | 3143.37           | 4072          |
+| llama_33         | 0.647              | 0.678                 | 4573.20        | 4588.00           | 3656          |
+| mistral_large    | 0.634              | 0.650                 | 3285.32        | 3300.91           | 3640          |
 
 - Both C-index and AIC are now reported for baseline and interaction models, allowing direct comparison of discrimination and model fit.
 - C-index (Interaction) is higher than baseline for most models, confirming the value of modeling nuanced, context-dependent risk patterns.
