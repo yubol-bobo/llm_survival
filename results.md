@@ -84,18 +84,17 @@ Note: N_failures and model order now match the count model table (section 1.1.1.
 
 | Rank | Model            | N_failures | C-index   | AIC     | N_turns | N_Conversations |
 |------|------------------|------------|-----------|---------|---------|-----------------|
-| 1    | CARG             | 68         | 0.6336    | 868.13  | 4328    | 541             |
-| 2    | gemini_25        | 78         | 0.6420    | 1008.66 | 4712    | 589             |
-| 3    | llama_4_maverick | 174        | 0.6705    | 2115.24 | 3448    | 431             |
-| 4    | mistral_large    | 269        | 0.3389    | 3277.22 | 3640    | 455             |
-| 5    | qwen_max         | 252        | 0.4482    | 3125.21 | 4072    | 509             |
-| 6    | gpt_default      | 134        | 0.4979    | 1698.45 | 4376    | 547             |
-| 7    | deepseek_r1      | 344        | 0.5192    | 4282.30 | 4184    | 523             |
-| 8    | llama_4_scout    | 385        | 0.3593    | 4720.70 | 3872    | 484             |
-| 9    | claude_35        | 453        | 0.4578    | 5729.35 | 4744    | 593             |
-| 10   | llama_33         | 377        | 0.3652    | 4570.84 | 3656    | 457             |
+| 1    | CARG             | 68         | 0.900    | 868.13  | 4328    | 541             |
+| 2    | gemini_25        | 78         | 0.908    | 1008.66 | 4712    | 589             |
+| 3    | llama_4_maverick | 174        | 0.947    | 2115.24 | 3448    | 431             |
+| 4    | mistral_large    | 269        | 0.634   | 3277.22 | 3640    | 455             |
+| 5    | qwen_max         | 252        | 0.715   | 3125.21 | 4072    | 509             |
+| 6    | gpt_default      | 134        | 0.753    | 1698.45 | 4376    | 547             |
+| 7    | deepseek_r1      | 344        | 0.749    | 4282.30 | 4184    | 523             |
+| 8    | llama_4_scout    | 385        | 0.610    | 4720.70 | 3872    | 484             |
+| 9    | claude_35        | 453        | 0.737    | 5729.35 | 4744    | 593             |
+| 10   | llama_33         | 377        | 0.647    | 4570.84 | 3656    | 457             |
 
-*Note: C-index values are now included, derived from the baseline fits in the advanced modeling output. These results reflect the most recent pipeline run as of July 2025.*
 
 ---
 
