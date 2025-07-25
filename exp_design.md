@@ -104,3 +104,37 @@ This document outlines the experimental pipeline for evaluating the consistency 
 - The pipeline ensures a fair, rigorous, and interpretable comparison of LLMs, with a focus on real-world survival under adversarial conditions.
 - By ranking models by N_failures and providing rich subgroup and temporal analyses, the framework supports both practical deployment decisions and future research directions.
 - CARG, as the proposed method, sets a new benchmark for LLM survival in adversarial multi-turn settings, combining empirical robustness (fewest failures) with strong model fit and competitive discrimination. 
+
+---
+
+## Feature Definitions and Clarifications
+
+- **prompt_to_prompt_drift**: The semantic distance (cosine distance between sentence embeddings) between the current user prompt and the previous user prompt. Measures the immediate change in topic or intent from one turn to the next.
+
+- **context_to_prompt_drift**: The semantic distance between the current user prompt and the accumulated conversation context up to that point. Captures how much the new prompt deviates from the overall conversation history.
+
+- **cumulative_drift**: The running sum of prompt_to_prompt_drift values up to the current turn. Represents the total semantic drift accumulated in the context window as the conversation progresses.
+
+- **failure**: A binary indicator (1/0) for whether the LLM failed (i.e., deviated from the correct answer) at a given turn.
+
+- **censored**: A binary indicator (1/0) for whether the conversation was censored (i.e., the LLM survived all turns without failure).
+
+- **subject_cluster**: The academic subject or content area of the question (e.g., STEM, Humanities, Legal, etc.). Used for stratified/frailty analysis.
+
+- **difficulty**: The difficulty level of the question (e.g., elementary, high school, college, professional). Used for stratified/frailty analysis.
+
+- **adv_id**: The type or identifier of the adversarial prompt used at a given turn. Used in interaction terms to model prompt-specific effects.
+
+- **base_id**: The identifier for the base prompt or subject category. Used in interaction terms to model subject-specific effects.
+
+- **prompt_complexity**: The length (in words) of the user prompt at each turn. Used as a covariate to control for prompt length/complexity.
+
+- **round**: The turn number in the conversation (1–8 for follow-up rounds).
+
+- **turn_start / turn_stop**: The start and stop indices for each interval in the time-varying Cox model (used for survival analysis with time-varying covariates).
+
+- **model_prompt0_interaction**: A unique identifier for each model and base prompt combination, used for clustering or random effects.
+
+---
+
+Note: These definitions apply to all modeling and analysis scripts in this project. 
