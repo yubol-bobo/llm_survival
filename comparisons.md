@@ -12,15 +12,15 @@ This document provides a structured comparison of four modeling strategies used 
 
 **Formula:**
 - **Negative Binomial Regression:**
-  \[
-  \log(\mathbb{E}[Y_i]) = \beta_0 + \beta_1 X_{i1} + \cdots + \beta_p X_{ip}
-  \]
-  where \(Y_i\) is the count of survived turns for conversation \(i\), and \(X_{ij}\) are covariates (e.g., drift, prompt type).
+  ```
+  time_to_failure ~ avg_prompt_to_prompt_drift + avg_context_to_prompt_drift + avg_prompt_complexity + C(subject_cluster) + C(difficulty_level)
+  ```
+  where `time_to_failure` is the count of survived turns for conversation, and covariates include drift measures, prompt complexity, and categorical subject/difficulty levels.
 - **Cox Proportional Hazards:**
-  \[
-  h_i(t) = h_0(t) \exp(\beta_1 X_{i1} + \cdots + \beta_p X_{ip})
-  \]
-  where \(h_i(t)\) is the hazard for conversation \(i\) at time (turn) \(t\).
+  ```
+  prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift + prompt_complexity
+  ```
+  where the model includes all available drift measures and prompt complexity as covariates.
 
 **Strengths:**
 - Simple, interpretable, and computationally efficient.
@@ -40,15 +40,20 @@ This document provides a structured comparison of four modeling strategies used 
 - Models the hierarchical and repeated-measures structure of the data.
 
 **Formula:**
-- **Mixed Effects Cox Model:**
-  \[
-  h_{ij}(t) = h_0(t) \exp(\beta_1 X_{ij1} + \cdots + \beta_p X_{ijp} + b_j)
-  \]
-  where \(b_j \sim N(0, \sigma^2)\) is a random effect for cluster (e.g., subject, question) \(j\).
-- **Mixed Effects Negative Binomial:**
-  \[
-  \log(\mathbb{E}[Y_{ij}]) = \beta_0 + \beta_1 X_{ij1} + \cdots + \beta_p X_{ijp} + b_j
-  \]
+- **Individual Baseline Cox Model:**
+  ```
+  prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift + prompt_complexity
+  ```
+- **Subject Stratified Cox Model:**
+  ```
+  prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift + prompt_complexity
+  ```
+  with stratification by `subject_cluster` (strata=['subject_encoded'])
+- **Difficulty Stratified Cox Model:**
+  ```
+  prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift + prompt_complexity
+  ```
+  with stratification by `difficulty` (strata=['difficulty_encoded'])
 
 **Strengths:**
 - Accounts for unobserved heterogeneity and latent group-level effects.
@@ -69,11 +74,11 @@ This document provides a structured comparison of four modeling strategies used 
 - Models the dynamic evolution of risk as the conversation progresses.
 
 **Formula:**
-- **Time-Varying Cox Model:**
-  \[
-  h_i(t) = h_0(t) \exp(\beta_1(t) X_{i1}(t) + \cdots + \beta_p(t) X_{ip}(t))
-  \]
-  where covariates \(X_{ij}(t)\) and/or coefficients \(\beta_j(t)\) can change with turn \(t\).
+- **Time-Varying Cox Model (Frailty):**
+  ```
+  C(adv_id) + C(base_id) + C(turn_bin)
+  ```
+  where the model tries different combinations of adversarial prompt types, base prompt types, and turn bins as time-varying covariates.
 
 **Strengths:**
 - Captures temporal patterns and adaptation (or degradation) in LLM consistency.
@@ -94,11 +99,18 @@ This document provides a structured comparison of four modeling strategies used 
 - Models both the dynamic and hierarchical structure of the data, as well as higher-order interactions.
 
 **Formula:**
-- **Time-Varying Mixed Effects Cox Model with Interactions:**
-  \[
-  h_{ij}(t) = h_0(t) \exp\left(\sum_k \beta_k(t) X_{ijk}(t) + \sum_{l,m} \gamma_{lm}(t) X_{ijl}(t) X_{ijm}(t) + b_j\right)
-  \]
-  where \(b_j\) is a random effect for cluster \(j\), and interaction terms \(\gamma_{lm}(t)\) allow for context-dependent, time-varying effects.
+- **Baseline Time-Varying Model:**
+  ```
+  C(adv_id) + C(base_id) + prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift
+  ```
+- **Interaction Time-Varying Model:**
+  ```
+  C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift
+  ```
+- **Cumulative Interaction Model:**
+  ```
+  C(adv_id) * cumulative_drift + C(base_id) + prompt_to_prompt_drift + context_to_prompt_drift
+  ```
 
 **Strengths:**
 - Most comprehensive and realistic modeling of LLM performance in adversarial, multi-turn scenarios.
@@ -127,9 +139,13 @@ This document provides a structured comparison of four modeling strategies used 
 
 **Summary Table:**
 
-| Model Type                | Hierarchical Effects | Time-Varying Effects | Interactions | Interpretability | Computational Cost | Best For                                 |
-|--------------------------|---------------------|----------------------|--------------|------------------|-------------------|-------------------------------------------|
-| Baseline                 | No                  | No                   | No           | High             | Low               | Quick summaries, initial comparisons      |
-| Advanced (Mixed Effects) | Yes                 | No                   | No           | Medium           | Medium            | Accounting for latent group effects       |
-| Time-Varying             | No                  | Yes                  | No           | Medium           | Medium            | Temporal risk patterns                    |
-| Time-Varying Advanced    | Yes                 | Yes                  | Yes          | Lower            | High              | Comprehensive, robust survival analysis   | 
+| Model Type | Formula | Key Features | Complexity |
+|------------|---------|--------------|------------|
+| Baseline | `time_to_failure ~ drift_measures + C(subject) + C(difficulty)` | Simple, independent observations | Low |
+| Advanced | `drift_measures` with stratification by subject/difficulty | Hierarchical structure, frailty effects | Medium |
+| Time-Varying | `C(adv_id) + C(base_id) + C(turn_bin)` | Dynamic covariates, temporal evolution | Medium |
+| Time-Varying Advanced | `C(adv_id) * drift + C(base_id) * drift + cumulative_drift` | Interactions, mixed effects, time-varying | High |
+
+---
+
+**Note:** All formulas are implemented using the lifelines library for survival analysis and statsmodels for count models. The specific variable names and interactions may vary slightly between implementations based on data availability and convergence requirements. 
