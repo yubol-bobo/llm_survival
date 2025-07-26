@@ -13,6 +13,7 @@ This project provides a **comprehensive individual model analysis** of Large Lan
 - **🧪 Stratified Analysis:** Subject and difficulty stratification per individual model
 - **📈 Individual Comparisons:** Model-specific performance metrics and frailty effects
 - **⏰ Temporal Analysis:** Turn-by-turn drift evolution and vulnerability windows
+- **🔄 Advanced Time-Varying Models:** Three interaction types (P2P, Cumulative, Combined) for comprehensive drift analysis
 - **📁 Clean Pipeline:** Individual model analysis from data to model-specific results
 - **🎨 Individual Visualizations:** Per-model plots and comparative individual performance
 - **🛡️ Survival Ranking by N_failures:** All results tables are ranked by the number of failures (N_failures, ascending), directly reflecting LLM robustness. C-index and AIC are included as supporting metrics.
@@ -27,6 +28,9 @@ llm_survival_working/
 │   ├── advanced_modeling.py                # Individual model stratified/frailty analysis
 │   ├── baseline_modeling.py                # Legacy baseline models (optional)
 │   ├── time_varying_advanced_modeling.py   # Time-varying Cox models (per model)
+│   ├── time_varying_advanced_modeling_cumulative.py  # Cumulative time-varying models
+│   ├── time_varying_advanced_modeling_combined.py   # Combined time-varying models
+│   ├── time_varying_advanced_modeling.py    # Unified time-varying models (all types)
 │   ├── time_varying_frailty_modeling.py    # Time-varying frailty models (per model)
 │   └── ...                                 # (other modeling scripts)
 │
@@ -141,7 +145,7 @@ python extract_cox_coefficients.py
 - Extracts coefficients, hazard ratios, p-values for each model
 - Outputs comparison matrices
 
-### **Phase 7: Temporal Drift & Time-Varying Frailty Analysis**
+### **Phase 7: Temporal Drift & Time-Varying Analysis**
 
 ```bash
 python utils/analyze_drift_by_turns.py
@@ -149,6 +153,19 @@ python modeling/time_varying_frailty_modeling.py
 ```
 - Analyzes turn-by-turn drift and time-varying frailty effects for each model
 - Outputs temporal statistics, rankings, and visualizations
+
+### **Phase 8: Advanced Time-Varying Modeling (Optional)**
+
+```bash
+# Choose interaction type: p2p, cumulative, or combined
+python modeling/time_varying_advanced_modeling.py --type p2p
+python modeling/time_varying_advanced_modeling.py --type cumulative  
+python modeling/time_varying_advanced_modeling.py --type combined
+```
+- **P2P**: Prompt-to-prompt drift interactions with adversarial/base contexts
+- **Cumulative**: Cumulative drift interactions with context-specific effects
+- **Combined**: All drift measures with comprehensive interaction modeling
+- Generates model-specific time-varying coefficients and performance rankings
 
 ---
 
@@ -162,7 +179,8 @@ python utils/extract_individual_model_coefficients.py && \
 python modeling/advanced_modeling.py && \
 python extract_cox_coefficients.py && \
 python utils/analyze_drift_by_turns.py && \
-python modeling/time_varying_frailty_modeling.py
+python modeling/time_varying_frailty_modeling.py && \
+python modeling/time_varying_advanced_modeling.py --type combined
 ```
 
 ---
@@ -197,6 +215,7 @@ python modeling/time_varying_frailty_modeling.py
 - **Stratification and frailty** reveal unobserved heterogeneity by subject and difficulty.
 - **Temporal analysis** shows adaptation and vulnerability windows across conversation turns.
 - **Drift cliff analysis** reveals sharp, nonlinear increases in failure risk as semantic drift accumulates, especially for certain adversarial prompt types.
+- **Advanced time-varying models** provide three different interaction frameworks for understanding drift effects across conversation turns.
 - **Subject and difficulty analyses** show which content areas are most/least robust for each LLM.
 
 ---

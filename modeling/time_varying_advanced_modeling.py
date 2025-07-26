@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """
-Time-Varying Advanced Modeling with Interaction Terms
-=====================================================
-Implements Cox time-varying models with interaction terms between:
-- Adversarial prompt types (C(adv_id)) × Prompt-to-prompt drift
-- Base prompt types (C(base_id)) × Context-to-prompt drift
-- Plus cumulative drift as a main effect
+Unified Time-Varying Advanced Modeling with Multiple Interaction Types
+=====================================================================
+Combines three different time-varying modeling approaches:
 
-This addresses the advisor's suggestion to combine discrete prompt effects
-with continuous drift measures through interaction terms.
-
-Formula: C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift
+1. P2P (Prompt-to-Prompt): C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift
+2. Cumulative: C(adv_id) * cumulative_drift + C(base_id) + prompt_to_prompt_drift + context_to_prompt_drift  
+3. Combined: C(adv_id) * cumulative_drift + C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + all_drift_measures
 
 Usage:
-    python time_varying_advanced_modeling.py
+    python time_varying_advanced_modeling_unified.py --type p2p
+    python time_varying_advanced_modeling_unified.py --type cumulative
+    python time_varying_advanced_modeling_unified.py --type combined
 
 Outputs:
     - Individual model interaction coefficients
     - Interaction effect visualizations
     - Comparison with baseline time-varying models
+    - Type-specific analysis results
 """
 
 import pandas as pd
@@ -26,6 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import argparse
 from lifelines import CoxTimeVaryingFitter
 from tqdm import tqdm
 import warnings
@@ -33,17 +33,35 @@ import json
 import lifelines.utils
 warnings.filterwarnings('ignore')
 
-class TimeVaryingAdvancedAnalyzer:
-    """Advanced time-varying Cox models with drift × prompt type interactions."""
+class TimeVaryingAdvancedUnifiedAnalyzer:
+    """Unified advanced time-varying Cox models with configurable interaction types."""
     
-    def __init__(self):
+    def __init__(self, interaction_type='p2p'):
         self.models_data = {}
         self.interaction_results = {}
         self.baseline_results = {}
+        self.interaction_type = interaction_type.lower()
+        
+        # Define interaction formulas for each type
+        self.interaction_formulas = {
+            'p2p': "C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift",
+            'cumulative': "C(adv_id) * cumulative_drift + C(base_id) + prompt_to_prompt_drift + context_to_prompt_drift",
+            'combined': "C(adv_id) * cumulative_drift + C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift"
+        }
+        
+        # Define simplified formulas for fallback
+        self.simplified_formulas = {
+            'p2p': "C(adv_id) + prompt_to_prompt_drift + C(adv_id):prompt_to_prompt_drift + cumulative_drift",
+            'cumulative': "C(adv_id) + cumulative_drift + C(adv_id):cumulative_drift + prompt_to_prompt_drift + context_to_prompt_drift",
+            'combined': "C(adv_id) + cumulative_drift + prompt_to_prompt_drift + C(adv_id):cumulative_drift + C(adv_id):prompt_to_prompt_drift"
+        }
+        
+        if self.interaction_type not in self.interaction_formulas:
+            raise ValueError(f"Invalid interaction type: {interaction_type}. Must be one of: {list(self.interaction_formulas.keys())}")
         
     def load_and_prepare_data(self):
         """Load and prepare data with both drift measures and prompt types."""
-        print("\n🔍 LOADING AND PREPARING ADVANCED TIME-VARYING DATA")
+        print(f"\n🔍 LOADING AND PREPARING ADVANCED TIME-VARYING DATA ({self.interaction_type.upper()})")
         print("=" * 65)
         
         processed_dir = 'processed_data'
@@ -75,13 +93,10 @@ class TimeVaryingAdvancedAnalyzer:
                     long_df.rename(columns={'conversation_id': 'convo_id'}, inplace=True)
                     
                     # 2. Create adversarial prompt types based on turn
-                    # First turn is always 'base', subsequent turns are adversarial
                     def assign_adv_id(row):
                         if row['turn_start'] == 0:
                             return 'base'
                         else:
-                            # Assign adversarial prompt types based on some logic
-                            # For now, we'll use a deterministic assignment based on conversation + turn
                             adv_prompts = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8']
                             idx = (int(row['convo_id']) + int(row['turn_start'])) % len(adv_prompts)
                             return adv_prompts[idx]
@@ -89,7 +104,6 @@ class TimeVaryingAdvancedAnalyzer:
                     long_df['adv_id'] = long_df.apply(assign_adv_id, axis=1)
                     
                     # 3. Create base prompt categories (subject-based)
-                    # We'll use a hash-based assignment for consistency
                     base_categories = ['STEM', 'Humanities', 'Medical', 'Business', 'Legal']
                     long_df['base_id'] = long_df['convo_id'].apply(
                         lambda x: base_categories[hash(str(x)) % len(base_categories)]
@@ -100,12 +114,12 @@ class TimeVaryingAdvancedAnalyzer:
                     long_df['context_to_prompt_drift'] = long_df['context_to_prompt_drift'].fillna(0)
                     long_df['cumulative_drift'] = long_df['cumulative_drift'].fillna(0)
                     
-                    # 5. Remove rows with missing critical data
+                    # 5. Remove rows with missing essential data
                     long_df = long_df.dropna(subset=['convo_id', 'turn_start', 'turn_stop', 'fail'])
                     
                     self.models_data[model_name] = long_df
                     print(f"✅ {model_name}: {len(long_df.convo_id.unique())} conversations, {len(long_df)} turns prepared")
-
+                    
                 except Exception as e:
                     print(f"❌ Error processing {model_name}: {e}")
             else:
@@ -115,17 +129,17 @@ class TimeVaryingAdvancedAnalyzer:
         return len(self.models_data) > 0
 
     def fit_baseline_time_varying_models(self):
-        """Fit baseline time-varying models (without interactions) for comparison."""
+        """Fit baseline time-varying models without interactions."""
         print("\n🏗️ FITTING BASELINE TIME-VARYING MODELS (NO INTERACTIONS)")
         print("=" * 65)
-
+        
         for model_name, df in self.models_data.items():
             print(f"--- Baseline model for: {model_name.upper()} ---")
             
             try:
                 ctv = CoxTimeVaryingFitter(penalizer=0.01)
                 
-                # Baseline formula without interactions
+                # Baseline formula (same for all types)
                 baseline_formula = "C(adv_id) + C(base_id) + prompt_to_prompt_drift + context_to_prompt_drift + cumulative_drift"
                 
                 print(f"    Formula: {baseline_formula}")
@@ -137,13 +151,7 @@ class TimeVaryingAdvancedAnalyzer:
                     stop_col="turn_stop",
                     formula=baseline_formula
                 )
-                # Compute C-index manually
-                risk_scores = ctv.predict_partial_hazard(df)
-                c_index = lifelines.utils.concordance_index(
-                    df['turn_stop'],
-                    -risk_scores,
-                    df['fail']
-                )
+                
                 self.baseline_results[model_name] = {
                     'summary': ctv.summary,
                     'formula': baseline_formula,
@@ -152,28 +160,29 @@ class TimeVaryingAdvancedAnalyzer:
                     'n_observations': len(df),
                     'n_events': df['fail'].sum(),
                     'n_conversations': df['convo_id'].nunique(),
-                    'cindex': c_index
+                    'model_object': ctv,
+                    'cindex': ctv.concordance_index_
                 }
                 
-                print(f"    ✅ Baseline converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
+                print(f"    ✅ Baseline model converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
                 
             except Exception as e:
-                print(f"    ❌ Baseline failed: {e}")
+                print(f"    ❌ Baseline model failed: {e}")
                 self.baseline_results[model_name] = None
 
     def fit_interaction_time_varying_models(self):
-        """Fit advanced time-varying models with interaction terms."""
-        print("\n🔬 FITTING ADVANCED TIME-VARYING MODELS (WITH INTERACTIONS)")
+        """Fit advanced time-varying models with interaction terms based on type."""
+        print(f"\n🔬 FITTING ADVANCED TIME-VARYING MODELS ({self.interaction_type.upper()} INTERACTIONS)")
         print("=" * 70)
 
+        interaction_formula = self.interaction_formulas[self.interaction_type]
+        simplified_formula = self.simplified_formulas[self.interaction_type]
+
         for model_name, df in self.models_data.items():
-            print(f"--- Interaction model for: {model_name.upper()} ---")
+            print(f"--- {self.interaction_type.upper()} interaction model for: {model_name.upper()} ---")
             
             try:
                 ctv = CoxTimeVaryingFitter(penalizer=0.01)
-                
-                # Advanced formula with interactions as requested
-                interaction_formula = "C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift"
                 
                 print(f"    Formula: {interaction_formula}")
                 ctv.fit(
@@ -184,15 +193,15 @@ class TimeVaryingAdvancedAnalyzer:
                     stop_col="turn_stop",
                     formula=interaction_formula
                 )
-                # For interaction models, after fitting:
-                # ctv.fit(...)
-                # ...
+                
+                # Calculate C-index
                 risk_scores = ctv.predict_partial_hazard(df)
                 c_index = lifelines.utils.concordance_index(
                     df['turn_stop'],
                     -risk_scores,
                     df['fail']
                 )
+                
                 self.interaction_results[model_name] = {
                     'summary': ctv.summary,
                     'formula': interaction_formula,
@@ -201,11 +210,12 @@ class TimeVaryingAdvancedAnalyzer:
                     'n_observations': len(df),
                     'n_events': df['fail'].sum(),
                     'n_conversations': df['convo_id'].nunique(),
-                    'model_object': ctv,  # Store for detailed analysis
-                    'cindex': c_index
+                    'model_object': ctv,
+                    'cindex': c_index,
+                    'type': self.interaction_type
                 }
                 
-                print(f"    ✅ Interaction model converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
+                print(f"    ✅ {self.interaction_type.upper()} interaction model converged. Log-likelihood: {ctv.log_likelihood_:.2f}")
                 
                 # Print key interaction effects
                 summary_df = ctv.summary
@@ -219,11 +229,10 @@ class TimeVaryingAdvancedAnalyzer:
                         print(f"      • {idx}: HR={hr:.3f}, p={p_val:.3f} {significance}")
                 
             except Exception as e:
-                print(f"    ❌ Interaction model failed: {e}")
+                print(f"    ❌ {self.interaction_type.upper()} interaction model failed: {e}")
                 # Try simplified version
                 try:
-                    print(f"    🔄 Attempting simplified interaction model...")
-                    simplified_formula = "C(adv_id) + prompt_to_prompt_drift + C(adv_id):prompt_to_prompt_drift + cumulative_drift"
+                    print(f"    🔄 Attempting simplified {self.interaction_type} interaction model...")
                     ctv_simple = CoxTimeVaryingFitter(penalizer=0.05)
                     ctv_simple.fit(
                         df, 
@@ -243,10 +252,11 @@ class TimeVaryingAdvancedAnalyzer:
                         'n_events': df['fail'].sum(),
                         'n_conversations': df['convo_id'].nunique(),
                         'model_object': ctv_simple,
-                        'note': 'Simplified interaction model used',
-                        'cindex': ctv_simple.concordance_index_  # NEW: Save C-index
+                        'note': f'Simplified {self.interaction_type} interaction model used',
+                        'cindex': ctv_simple.concordance_index_,
+                        'type': self.interaction_type
                     }
-                    print(f"    ✅ Simplified interaction model converged. Log-likelihood: {ctv_simple.log_likelihood_:.2f}")
+                    print(f"    ✅ Simplified {self.interaction_type} interaction model converged. Log-likelihood: {ctv_simple.log_likelihood_:.2f}")
                     
                 except Exception as e2:
                     print(f"    ❌ Simplified model also failed: {e2}")
@@ -254,7 +264,7 @@ class TimeVaryingAdvancedAnalyzer:
 
     def compare_models(self):
         """Compare baseline vs interaction models for each LLM."""
-        print("\n📊 COMPARING BASELINE VS INTERACTION MODELS")
+        print(f"\n📊 COMPARING BASELINE VS {self.interaction_type.upper()} INTERACTION MODELS")
         print("=" * 50)
         
         comparison_results = []
@@ -279,14 +289,15 @@ class TimeVaryingAdvancedAnalyzer:
                 'N_Events': baseline['n_events'],
                 'N_Conversations': baseline['n_conversations'],
                 'Interaction_Formula': interaction['formula'],
-                'Note': interaction.get('note', 'Full interaction model')
+                'Note': interaction.get('note', f'Full {self.interaction_type} interaction model'),
+                'Type': self.interaction_type
             }
             
             comparison_results.append(comparison)
             
-            # Print summary
             ll_improve = comparison['LogLik_Improvement']
             aic_improve = comparison['AIC_Improvement']
+            
             print(f"✅ {model_name}:")
             print(f"   • Log-likelihood improvement: {ll_improve:+.2f}")
             print(f"   • AIC improvement: {aic_improve:+.2f}")
@@ -296,7 +307,7 @@ class TimeVaryingAdvancedAnalyzer:
 
     def extract_interaction_effects(self):
         """Extract and summarize interaction effects across models."""
-        print("\n🔍 EXTRACTING INTERACTION EFFECTS ACROSS MODELS")
+        print(f"\n🔍 EXTRACTING {self.interaction_type.upper()} INTERACTION EFFECTS ACROSS MODELS")
         print("=" * 55)
         
         interaction_effects = []
@@ -304,20 +315,15 @@ class TimeVaryingAdvancedAnalyzer:
         for model_name, results in self.interaction_results.items():
             if results is None:
                 continue
-                
+            
             summary_df = results['summary']
-            
-            # Extract main effects
             main_effects = summary_df[~summary_df.index.str.contains(':', na=False)]
-            
-            # Extract interaction effects
             interaction_terms = summary_df[summary_df.index.str.contains(':', na=False)]
             
-            print(f"\n🤖 {model_name.upper()}:")
+            print(f"\n🤖 {model_name.upper()} ({self.interaction_type.upper()}):")
             print(f"   • Main effects: {len(main_effects)}")
             print(f"   • Interaction terms: {len(interaction_terms)}")
             
-            # Process each interaction term
             for term, row in interaction_terms.iterrows():
                 effect_data = {
                     'Model': model_name,
@@ -325,347 +331,287 @@ class TimeVaryingAdvancedAnalyzer:
                     'Coefficient': row['coef'],
                     'Hazard_Ratio': row['exp(coef)'],
                     'P_Value': row['p'],
-                    'CI_Lower': row['coef lower 95%'],
-                    'CI_Upper': row['coef upper 95%'],
-                    'HR_CI_Lower': row['exp(coef) lower 95%'],
-                    'HR_CI_Upper': row['exp(coef) upper 95%'],
-                    'Significance': '***' if row['p'] < 0.001 else '**' if row['p'] < 0.01 else '*' if row['p'] < 0.05 else 'ns'
+                    'Lower_CI': row.get('lower 0.95', np.nan),
+                    'Upper_CI': row.get('upper 0.95', np.nan),
+                    'Type': self.interaction_type
                 }
-                
                 interaction_effects.append(effect_data)
                 
-                # Print significant effects
-                if row['p'] < 0.05:
-                    hr = row['exp(coef)']
-                    p_val = row['p']
-                    sig = effect_data['Significance']
-                    print(f"      🎯 {term}: HR={hr:.3f}, p={p_val:.4f} {sig}")
+                significance = "***" if row['p'] < 0.001 else "**" if row['p'] < 0.01 else "*" if row['p'] < 0.05 else "ns"
+                print(f"     • {term}: HR={row['exp(coef)']:.3f}, p={row['p']:.3f} {significance}")
         
         return interaction_effects
 
     def save_results(self):
         """Save all results to files."""
-        print("\n💾 SAVING TIME-VARYING ADVANCED MODELING RESULTS")
-        print("=" * 55)
+        print(f"\n💾 SAVING {self.interaction_type.upper()} ANALYSIS RESULTS")
+        print("=" * 50)
         
+        # Ensure output directory exists
         os.makedirs('generated/outputs', exist_ok=True)
         
-        # Save baseline results
-        if self.baseline_results:
-            baseline_data = []
-            for model_name, results in self.baseline_results.items():
-                if results is not None:
-                    summary_df = results['summary'].copy()
-                    summary_df['Model'] = model_name
-                    summary_df['Analysis_Type'] = 'Baseline_TimeVarying'
-                    baseline_data.append(summary_df)
-            
-            if baseline_data:
-                pd.concat(baseline_data).to_csv('generated/outputs/baseline_time_varying_results.csv')
-                print("✅ Baseline time-varying results saved")
-        
-        # Save interaction results
-        if self.interaction_results:
-            interaction_data = []
-            for model_name, results in self.interaction_results.items():
-                if results is not None:
-                    summary_df = results['summary'].copy()
-                    summary_df['Model'] = model_name
-                    summary_df['Analysis_Type'] = 'Interaction_TimeVarying'
-                    summary_df['Formula'] = results['formula']
-                    interaction_data.append(summary_df)
-            
-            if interaction_data:
-                pd.concat(interaction_data).to_csv('generated/outputs/interaction_time_varying_results.csv')
-                print("✅ Interaction time-varying results saved")
-        
-        # Save comparison results
+        # 1. Save model comparison results
         comparison_results = self.compare_models()
         if comparison_results:
-            pd.DataFrame(comparison_results).to_csv('generated/outputs/model_comparison_time_varying.csv', index=False)
-            print("✅ Model comparison results saved")
+            comparison_df = pd.DataFrame(comparison_results)
+            output_file = f'generated/outputs/model_comparison_time_varying_{self.interaction_type}.csv'
+            comparison_df.to_csv(output_file, index=False)
+            print(f"✅ Model comparison saved to: {output_file}")
         
-        # Save interaction effects summary
+        # 2. Save interaction effects
         interaction_effects = self.extract_interaction_effects()
         if interaction_effects:
-            pd.DataFrame(interaction_effects).to_csv('generated/outputs/interaction_effects_summary.csv', index=False)
-            print("✅ Interaction effects summary saved")
+            effects_df = pd.DataFrame(interaction_effects)
+            output_file = f'generated/outputs/interaction_effects_summary_{self.interaction_type}.csv'
+            effects_df.to_csv(output_file, index=False)
+            print(f"✅ Interaction effects saved to: {output_file}")
         
-        # NEW: Save C-index for all models
-        cindex_rows = []
-        for model_name in self.baseline_results:
-            base = self.baseline_results.get(model_name)
-            inter = self.interaction_results.get(model_name)
-            cindex_rows.append({
-                'Model': model_name,
-                'C_index_Baseline': base['cindex'] if base else np.nan,
-                'C_index_Interaction': inter['cindex'] if inter else np.nan
-            })
-        if cindex_rows:
-            cindex_df = pd.DataFrame(cindex_rows)
-            cindex_file = 'generated/outputs/time_varying_advanced_cindex.csv'
-            cindex_df.to_csv(cindex_file, index=False)
-            print(f"✅ C-index values saved to: {cindex_file}")
+        # 3. Save detailed results
+        detailed_results = {}
+        for model_name, results in self.interaction_results.items():
+            if results is None:
+                continue
+            
+            # Convert numpy types for JSON serialization
+            def convert_numpy_types(obj):
+                if isinstance(obj, np.integer):
+                    return int(obj)
+                elif isinstance(obj, np.floating):
+                    return float(obj)
+                elif isinstance(obj, np.ndarray):
+                    return obj.tolist()
+                elif pd.isna(obj):
+                    return None
+                return obj
+            
+            # Extract summary statistics
+            summary_df = results['summary']
+            summary_dict = {}
+            for idx, row in summary_df.iterrows():
+                summary_dict[idx] = {
+                    'coef': convert_numpy_types(row['coef']),
+                    'exp(coef)': convert_numpy_types(row['exp(coef)']),
+                    'se(coef)': convert_numpy_types(row['se(coef)']),
+                    'z': convert_numpy_types(row['z']),
+                    'p': convert_numpy_types(row['p']),
+                    'lower 0.95': convert_numpy_types(row.get('lower 0.95', np.nan)),
+                    'upper 0.95': convert_numpy_types(row.get('upper 0.95', np.nan))
+                }
+            
+            detailed_results[model_name] = {
+                'formula': results['formula'],
+                'aic': convert_numpy_types(results.get('aic')),
+                'log_likelihood': convert_numpy_types(results['log_likelihood']),
+                'n_observations': results['n_observations'],
+                'n_events': results['n_events'],
+                'n_conversations': results['n_conversations'],
+                'cindex': convert_numpy_types(results.get('cindex')),
+                'summary': summary_dict,
+                'note': results.get('note', ''),
+                'type': self.interaction_type
+            }
+        
+        # Save detailed results
+        output_file = f'generated/outputs/interaction_time_varying_results_{self.interaction_type}.csv'
+        
+        # Convert to DataFrame for easier viewing
+        detailed_list = []
+        for model_name, results in detailed_results.items():
+            for term, stats in results['summary'].items():
+                row = {
+                    'Model': model_name,
+                    'Term': term,
+                    'Formula': results['formula'],
+                    'Coefficient': stats['coef'],
+                    'Hazard_Ratio': stats['exp(coef)'],
+                    'SE': stats['se(coef)'],
+                    'Z_Score': stats['z'],
+                    'P_Value': stats['p'],
+                    'Lower_CI': stats['lower 0.95'],
+                    'Upper_CI': stats['upper 0.95'],
+                    'AIC': results['aic'],
+                    'Log_Likelihood': results['log_likelihood'],
+                    'C_Index': results['cindex'],
+                    'N_Observations': results['n_observations'],
+                    'N_Events': results['n_events'],
+                    'Type': results['type']
+                }
+                detailed_list.append(row)
+        
+        if detailed_list:
+            detailed_df = pd.DataFrame(detailed_list)
+            detailed_df.to_csv(output_file, index=False)
+            print(f"✅ Detailed results saved to: {output_file}")
+        
+        # 4. Save baseline results
+        baseline_list = []
+        for model_name, results in self.baseline_results.items():
+            if results is None:
+                continue
+            
+            for term, row in results['summary'].iterrows():
+                baseline_row = {
+                    'Model': model_name,
+                    'Term': term,
+                    'Formula': results['formula'],
+                    'Coefficient': row['coef'],
+                    'Hazard_Ratio': row['exp(coef)'],
+                    'SE': row['se(coef)'],
+                    'Z_Score': row['z'],
+                    'P_Value': row['p'],
+                    'Lower_CI': row.get('lower 0.95', np.nan),
+                    'Upper_CI': row.get('upper 0.95', np.nan),
+                    'AIC': results.get('aic'),
+                    'Log_Likelihood': results['log_likelihood'],
+                    'C_Index': results.get('cindex'),
+                    'N_Observations': results['n_observations'],
+                    'N_Events': results['n_events'],
+                    'Type': 'baseline'
+                }
+                baseline_list.append(baseline_row)
+        
+        if baseline_list:
+            baseline_df = pd.DataFrame(baseline_list)
+            baseline_output_file = f'generated/outputs/baseline_time_varying_results_{self.interaction_type}.csv'
+            baseline_df.to_csv(baseline_output_file, index=False)
+            print(f"✅ Baseline results saved to: {baseline_output_file}")
 
     def create_visualizations(self):
-        """Create visualizations of interaction effects."""
-        print("\n🎨 CREATING INTERACTION EFFECTS VISUALIZATIONS")
+        """Create visualizations for the analysis."""
+        print(f"\n🎨 CREATING {self.interaction_type.upper()} ANALYSIS VISUALIZATIONS")
         print("=" * 50)
         
-        try:
-            # Load interaction effects
-            interaction_effects = self.extract_interaction_effects()
-            if not interaction_effects:
-                print("⚠️ No interaction effects to visualize")
-                return
+        # Ensure output directory exists
+        os.makedirs('generated/figs', exist_ok=True)
+        
+        # 1. Model comparison visualization
+        comparison_results = self.compare_models()
+        if comparison_results:
+            comparison_df = pd.DataFrame(comparison_results)
             
-            df_effects = pd.DataFrame(interaction_effects)
+            # C-index comparison
+            plt.figure(figsize=(12, 8))
             
-            # Filter for significant effects
-            sig_effects = df_effects[df_effects['P_Value'] < 0.05]
+            # Get C-index values from baseline and interaction models
+            baseline_cindex = []
+            interaction_cindex = []
+            model_names = []
             
-            if sig_effects.empty:
-                print("⚠️ No significant interaction effects found")
-                return
-            
-            # Create forest plot of interaction effects
-            plt.figure(figsize=(14, 10))
-            
-            # Prepare data for plotting
-            sig_effects = sig_effects.sort_values(['Model', 'Hazard_Ratio'])
-            
-            y_pos = range(len(sig_effects))
-            colors = plt.cm.Set3(np.linspace(0, 1, len(sig_effects['Model'].unique())))
-            model_colors = {model: colors[i] for i, model in enumerate(sig_effects['Model'].unique())}
-            
-            # Plot hazard ratios with confidence intervals
-            for i, (_, row) in enumerate(sig_effects.iterrows()):
-                color = model_colors[row['Model']]
-                plt.scatter(row['Hazard_Ratio'], i, color=color, s=100, alpha=0.8)
-                plt.plot([row['HR_CI_Lower'], row['HR_CI_Upper']], [i, i], 
-                        color=color, linewidth=2, alpha=0.6)
+            for model_name in comparison_df['Model']:
+                baseline = self.baseline_results.get(model_name)
+                interaction = self.interaction_results.get(model_name)
                 
-                # Add significance markers
-                if row['P_Value'] < 0.001:
-                    marker = '***'
-                elif row['P_Value'] < 0.01:
-                    marker = '**'
-                else:
-                    marker = '*'
-                plt.text(row['Hazard_Ratio'] * 1.1, i, marker, fontsize=12, fontweight='bold')
+                if baseline and interaction:
+                    baseline_cindex.append(baseline.get('cindex', np.nan))
+                    interaction_cindex.append(interaction.get('cindex', np.nan))
+                    model_names.append(model_name)
             
-            # Formatting
-            plt.axvline(x=1, color='red', linestyle='--', alpha=0.7, label='No Effect (HR=1)')
-            plt.xlabel('Hazard Ratio', fontsize=12)
-            plt.ylabel('Interaction Terms', fontsize=12)
-            plt.title('Significant Interaction Effects: Adversarial Prompt Types × Drift Measures', fontsize=14)
+            if baseline_cindex and interaction_cindex:
+                x = np.arange(len(model_names))
+                width = 0.35
+                
+                plt.bar(x - width/2, baseline_cindex, width, label='Baseline', alpha=0.8)
+                plt.bar(x + width/2, interaction_cindex, width, label=f'{self.interaction_type.upper()} Interaction', alpha=0.8)
+                
+                plt.xlabel('Models')
+                plt.ylabel('C-Index')
+                plt.title(f'C-Index Comparison: Baseline vs {self.interaction_type.upper()} Interaction Models')
+                plt.xticks(x, model_names, rotation=45, ha='right')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                
+                output_file = f'generated/figs/time_varying_advanced_cindex_{self.interaction_type}.png'
+                plt.savefig(output_file, dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"✅ C-index comparison saved to: {output_file}")
+        
+        # 2. Interaction effects forest plot
+        interaction_effects = self.extract_interaction_effects()
+        if interaction_effects:
+            effects_df = pd.DataFrame(interaction_effects)
             
-            # Y-axis labels
-            labels = [f"{row['Model']}: {row['Term'][:40]}..." for _, row in sig_effects.iterrows()]
-            plt.yticks(y_pos, labels, fontsize=8)
+            # Filter significant interactions
+            significant_effects = effects_df[effects_df['P_Value'] < 0.05].copy()
             
-            # Legend
-            legend_elements = [plt.scatter([], [], color=color, label=model, s=100) 
-                             for model, color in model_colors.items()]
-            plt.legend(handles=legend_elements, title='Models', bbox_to_anchor=(1.05, 1), loc='upper left')
-            
-            plt.tight_layout()
-            
-            # Save plot
-            os.makedirs('generated/figs', exist_ok=True)
-            plt.savefig('generated/figs/interaction_effects_forest_plot.png', dpi=300, bbox_inches='tight')
-            print("✅ Forest plot saved: interaction_effects_forest_plot.png")
-            
-            plt.show()
-            
-        except Exception as e:
-            print(f"❌ Visualization failed: {e}")
-
-    def save_time_varying_group_analysis(self):
-        """Save subject and difficulty level analysis from time-varying advanced models."""
-        print("\n💾 SAVING TIME-VARYING GROUP ANALYSIS")
-        os.makedirs('generated/outputs', exist_ok=True)
-        subject_rows = []
-        difficulty_rows = []
-        for model_name, df in self.models_data.items():
-            # Assume 'base_id' is subject, 'difficulty' or 'level' is present in df
-            if 'base_id' in df.columns:
-                for subject in df['base_id'].unique():
-                    sub_df = df[df['base_id'] == subject]
-                    fail_times = sub_df[sub_df['fail'] == 1]['turn_stop']
-                    subject_rows.append({
-                        'subject': subject,
-                        'time_to_failure_mean': fail_times.mean(),
-                        'time_to_failure_std': fail_times.std(),
-                        'time_to_failure_count': len(fail_times),
-                        'model': model_name
-                    })
-            # Fix: check for both 'difficulty' and 'level'
-            diff_col = None
-            if 'difficulty' in df.columns:
-                diff_col = 'difficulty'
-            elif 'level' in df.columns:
-                diff_col = 'level'
-            if diff_col:
-                for diff in df[diff_col].unique():
-                    diff_df = df[df[diff_col] == diff]
-                    fail_times = diff_df[diff_df['fail'] == 1]['turn_stop']
-                    difficulty_rows.append({
-                        'difficulty': diff,
-                        'time_to_failure_mean': fail_times.mean(),
-                        'time_to_failure_std': fail_times.std(),
-                        'time_to_failure_count': len(fail_times),
-                        'model': model_name
-                    })
-        if subject_rows:
-            pd.DataFrame(subject_rows).to_csv('generated/outputs/time_varying_subject_cluster_analysis.csv', index=False)
-            print("✅ Saved: time_varying_subject_cluster_analysis.csv")
-        if difficulty_rows:
-            pd.DataFrame(difficulty_rows).to_csv('generated/outputs/time_varying_difficulty_level_analysis.csv', index=False)
-            print("✅ Saved: time_varying_difficulty_level_analysis.csv")
-
-    def visualize_group_analysis(self):
-        """Visualize the subject and difficulty level analysis from time-varying advanced models."""
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        import os
-        print("\n🎨 Visualizing group-level time-varying analysis...")
-        os.makedirs('generated/figs', exist_ok=True)
-        # Subject-level plot
-        subj_path = 'generated/outputs/time_varying_subject_cluster_analysis.csv'
-        if os.path.exists(subj_path):
-            df_subj = pd.read_csv(subj_path)
-            plt.figure(figsize=(12, 6))
-            sns.barplot(data=df_subj, x='subject', y='time_to_failure_mean', hue='model', ci=None)
-            plt.title('Mean Time to Failure by Subject (Time-Varying Advanced)')
-            plt.ylabel('Mean Time to Failure')
-            plt.xlabel('Subject')
-            plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.tight_layout()
-            plt.savefig('generated/figs/time_varying_subject_cluster_barplot.png', dpi=300)
-            plt.close()
-            print('✅ Saved: time_varying_subject_cluster_barplot.png')
-        else:
-            print(f'⚠️ {subj_path} not found')
-        # Difficulty-level plot
-        diff_path = 'generated/outputs/time_varying_difficulty_level_analysis.csv'
-        if os.path.exists(diff_path):
-            df_diff = pd.read_csv(diff_path)
-            plt.figure(figsize=(12, 6))
-            sns.barplot(data=df_diff, x='difficulty', y='time_to_failure_mean', hue='model', ci=None)
-            plt.title('Mean Time to Failure by Difficulty Level (Time-Varying Advanced)')
-            plt.ylabel('Mean Time to Failure')
-            plt.xlabel('Difficulty Level')
-            plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
-            plt.tight_layout()
-            plt.savefig('generated/figs/time_varying_difficulty_level_barplot.png', dpi=300)
-            plt.close()
-            print('✅ Saved: time_varying_difficulty_level_barplot.png')
-        else:
-            print(f'⚠️ {diff_path} not found')
-
-    def visualize_drift_cliff(self):
-        """Visualize the drift cliff for each model using interaction_time_varying_results.csv."""
-        import pandas as pd
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        import os
-        import numpy as np
-        print("\n🎨 Visualizing drift cliff across all models...")
-        os.makedirs('generated/figs', exist_ok=True)
-        df = pd.read_csv('generated/outputs/interaction_time_varying_results.csv')
-        drift_rows = df[df['covariate'].str.contains('prompt_to_prompt_drift') & (df['Analysis_Type'] == 'Interaction_TimeVarying')]
-        models = drift_rows['Model'].unique()
-        print(f"Models found: {models}")
-        plt.figure(figsize=(14, 8))
-        color_map = sns.color_palette('tab10', n_colors=len(models))
-        any_data = False
-        for i, model in enumerate(models):
-            model_df = drift_rows[drift_rows['Model'] == model]
-            main = model_df[model_df['covariate'] == 'prompt_to_prompt_drift']
-            if main.empty:
-                print(f"⚠️ No main drift effect for model {model}, skipping.")
-                continue
-            main_coef = main['coef'].values[0]
-            adv_rows = model_df[model_df['covariate'].str.contains('C\(adv_id\)\[T\.') & model_df['covariate'].str.contains(':prompt_to_prompt_drift')]
-            adv_ids = adv_rows['covariate'].str.extract(r'C\(adv_id\)\[T\.(.*?)\]:prompt_to_prompt_drift')[0].tolist()
-            adv_effects = []
-            adv_labels = []
-            for idx, row in adv_rows.iterrows():
-                adv_id = row['covariate'].split('[T.')[-1].split(']:')[0]
-                coef = main_coef + row['coef']
-                exp_coef = np.exp(coef)
-                # Clip extreme values for clarity
-                exp_coef = np.clip(exp_coef, 1e-3, 1e4)
-                adv_effects.append(exp_coef)
-                adv_labels.append(adv_id)
-            if len(adv_effects) > 0 and np.any(~np.isnan(adv_effects)):
-                plt.plot(adv_labels, adv_effects, marker='o', label=model, color=color_map[i])
-                any_data = True
-            else:
-                print(f"⚠️ No valid adv_effects for model {model}, skipping plot.")
-        plt.xlabel('Adversarial Prompt Type')
-        plt.ylabel('Hazard Ratio (exp(coef)) for Drift (log scale, clipped)')
-        plt.title('Drift Cliff: Hazard Ratio for Drift by Adversarial Prompt Type (All Models)\n(Values clipped to [1e-3, 1e4] for clarity)')
-        plt.yscale('log')
-        plt.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
-        plt.legend(title='Model', bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.tight_layout()
-        if any_data:
-            plt.savefig('generated/figs/drift_cliff_all_models.png', dpi=300)
-            print("✅ Drift cliff plot saved: generated/figs/drift_cliff_all_models.png")
-        else:
-            print("❌ No data available to plot drift cliff!")
-        plt.close()
+            if not significant_effects.empty:
+                plt.figure(figsize=(14, 10))
+                
+                # Create forest plot
+                y_pos = np.arange(len(significant_effects))
+                hazard_ratios = significant_effects['Hazard_Ratio'].values
+                lower_ci = significant_effects['Lower_CI'].values
+                upper_ci = significant_effects['Upper_CI'].values
+                
+                # Plot hazard ratios with confidence intervals
+                plt.errorbar(hazard_ratios, y_pos, xerr=[hazard_ratios - lower_ci, upper_ci - hazard_ratios], 
+                           fmt='o', capsize=5, capthick=2, markersize=8)
+                
+                # Add reference line at HR = 1
+                plt.axvline(x=1, color='red', linestyle='--', alpha=0.7, label='No Effect (HR=1)')
+                
+                plt.xlabel('Hazard Ratio')
+                plt.ylabel('Interaction Terms')
+                plt.title(f'Significant Interaction Effects ({self.interaction_type.upper()} Analysis)')
+                plt.yticks(y_pos, significant_effects['Term'] + ' (' + significant_effects['Model'] + ')')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+                plt.tight_layout()
+                
+                output_file = f'generated/figs/interaction_effects_forest_plot_{self.interaction_type}.png'
+                plt.savefig(output_file, dpi=300, bbox_inches='tight')
+                plt.close()
+                print(f"✅ Interaction effects forest plot saved to: {output_file}")
 
     def run_complete_analysis(self):
-        """Run the complete time-varying advanced analysis."""
-        print("🔬 TIME-VARYING ADVANCED MODELING WITH INTERACTIONS")
+        """Run the complete analysis pipeline."""
+        print(f"🚀 STARTING {self.interaction_type.upper()} TIME-VARYING ADVANCED ANALYSIS")
         print("=" * 60)
-        print("Implementing interaction terms between adversarial prompt types and drift measures")
-        print("Formula: C(adv_id) * prompt_to_prompt_drift + C(base_id) * context_to_prompt_drift + cumulative_drift\n")
         
-        # Load and prepare data
+        # Step 1: Load and prepare data
         if not self.load_and_prepare_data():
-            print("❌ Data preparation failed")
-            return
+            print("❌ Failed to load data. Exiting.")
+            return False
         
-        # Fit baseline models
+        # Step 2: Fit baseline models
         self.fit_baseline_time_varying_models()
         
-        # Fit interaction models
+        # Step 3: Fit interaction models
         self.fit_interaction_time_varying_models()
         
-        # Compare models
-        self.compare_models()
-        
-        # Extract effects
-        self.extract_interaction_effects()
-        
-        # Save results
+        # Step 4: Save results
         self.save_results()
         
-        # Save group-level time-varying analysis
-        self.save_time_varying_group_analysis()
-        
-        # Create visualizations
+        # Step 5: Create visualizations
         self.create_visualizations()
-        # Visualize group-level analysis
-        self.visualize_group_analysis()
-        self.visualize_drift_cliff()
         
-        print(f"\n🎉 TIME-VARYING ADVANCED ANALYSIS COMPLETE!")
-        print("=" * 50)
-        print(f"📊 Models analyzed: {len(self.models_data)}")
-        print(f"🔬 Interaction models fitted: {len([r for r in self.interaction_results.values() if r is not None])}")
-        print(f"📈 Baseline models fitted: {len([r for r in self.baseline_results.values() if r is not None])}")
-        print(f"🎯 Key insight: How adversarial prompt types interact with semantic drift magnitudes")
+        print(f"\n✅ {self.interaction_type.upper()} TIME-VARYING ADVANCED ANALYSIS COMPLETE!")
+        print("=" * 60)
+        return True
 
 def main():
-    """Run time-varying advanced modeling analysis."""
-    analyzer = TimeVaryingAdvancedAnalyzer()
-    analyzer.run_complete_analysis()
+    """Main function with command-line argument parsing."""
+    parser = argparse.ArgumentParser(description='Unified Time-Varying Advanced Modeling')
+    parser.add_argument('--type', type=str, choices=['p2p', 'cumulative', 'combined'], 
+                       default='p2p', help='Type of interaction analysis to perform')
+    
+    args = parser.parse_args()
+    
+    print(f"🎯 UNIFIED TIME-VARYING ADVANCED MODELING")
+    print(f"📊 Analysis Type: {args.type.upper()}")
+    print("=" * 50)
+    
+    # Create analyzer and run analysis
+    analyzer = TimeVaryingAdvancedUnifiedAnalyzer(interaction_type=args.type)
+    success = analyzer.run_complete_analysis()
+    
+    if success:
+        print(f"\n🎉 {args.type.upper()} analysis completed successfully!")
+        print("📁 Check generated/outputs/ and generated/figs/ for results.")
+    else:
+        print(f"\n❌ {args.type.upper()} analysis failed.")
+    
+    return success
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    main() 
