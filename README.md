@@ -37,12 +37,8 @@ llm_survival_working/
 │   ├── further_analysis.py                 # Subject/difficulty clustering analysis
 │   └── ...                                 # (other utility scripts)
 │
-├── extract_cox_coefficients.py             # Individual Cox coefficient extraction
-├── generate_individual_frailty_coefficients.py (DEPRECATED, safe to delete)
 ├── environment.yml                         # Python environment specification
 ├── README.md                               # This guide
-├── results.md                              # Complete analysis results summary
-├── experiment_results.md                   # Detailed experimental findings
 │
 ├── processed_data/                         # Processed datasets by model
 │   └── <model>/                            # Model-specific processed files
@@ -52,12 +48,7 @@ llm_survival_working/
 │
 ├── raw data/                               # Raw conversation & experiment files
 │   └── <model>/                            # Raw data per model
-│
-├── generated/
-│   ├── outputs/                            # CSV results & reports
-│   └── figs/                               # Generated visualizations
-│
-└── Research Design.docx                    # Study design documentation
+└──
 ```
 
 ---
