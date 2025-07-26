@@ -27,12 +27,8 @@ llm_survival_working/
 ├── modeling/
 │   ├── advanced_modeling.py                # Individual model stratified/frailty analysis
 │   ├── baseline_modeling.py                # Legacy baseline models (optional)
-│   ├── time_varying_advanced_modeling.py   # Time-varying Cox models (per model)
-│   ├── time_varying_advanced_modeling_cumulative.py  # Cumulative time-varying models
-│   ├── time_varying_advanced_modeling_combined.py   # Combined time-varying models
 │   ├── time_varying_advanced_modeling.py    # Unified time-varying models (all types)
 │   ├── time_varying_frailty_modeling.py    # Time-varying frailty models (per model)
-│   └── ...                                 # (other modeling scripts)
 │
 ├── utils/
 │   ├── data_process.py                     # Data preprocessing & feature engineering
@@ -220,10 +216,4 @@ python modeling/time_varying_advanced_modeling.py --type combined
 
 ---
 
-## 🤝 Contributing & Citation
-
-- For reproducible research and production use.
-- Contact: yubol@andrew.cmu.edu
-
----
 
