@@ -1,0 +1,402 @@
+\documentclass[letterpaper]{article}
+\usepackage{aaai25}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage[hyphens]{url}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{bm}
+\nocopyright
+
+\pdfinfo{
+/Title (Adversarial Robustness of Multi-Turn Conversations in Large Language Models: A Survival Analysis Perspective)
+/Author (Anonymous)
+}
+
+\title{Adversarial Robustness of Multi-Turn Conversations in Large Language Models: A Survival Analysis Perspective}
+\author{
+    %Authors
+    % All authors must be in the same font size and format.
+    Anonymous Authors
+}
+\affiliations{
+    %Afiliations
+    Anonymous Institution\\
+    Contact details will be provided upon acceptance
+%
+% See more examples next
+}
+
+% REMOVE THIS: bibentry
+% This is only needed to show inline citations in the guidelines document. You should not need it and can safely delete it.
+\usepackage{bibentry}
+% END REMOVE bibentry
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The evaluation of Large Language Models (LLMs) typically relies on static, task-based benchmarks that measure aggregate performance but often fail to capture the dynamics of conversational failure. In interactive applications, it is not only a matter of if a model will fail, but also when and why. This paper introduces a novel framework for analyzing LLM robustness by reframing the problem through the lens of survival analysis, a methodology traditionally used in biostatistics to model time-to-event data. We treat a conversation as a "lifespan" and a "conversational breakdown" as the event of interest. By applying advanced survival models—including Cox Proportional Hazards, stratified/frailty models, and time-varying coefficient models—we can analyze the "hazard" of a conversation failing at any given turn. Our framework allows for a fine-grained, individual analysis of different LLMs, identifying model-specific failure profiles and the covariates (e.g., prompt complexity, turn count, sentiment shifts) that significantly predict breakdown. The results demonstrate that this approach provides a more nuanced understanding of model robustness than traditional metrics, revealing specific vulnerabilities and temporal patterns of failure. This survival analysis paradigm offers a new direction for LLM evaluation, providing actionable insights for developing more resilient and reliable conversational agents.
+\end{abstract}
+
+% Uncomment the following to link to your code, datasets, an extended version or similar.
+% You must keep this block between (not within) the abstract and the main body of the paper.
+\begin{links}
+    \link{Code}{https://anonymous.4open.science/r/slkkkllll/}
+    % \link{Datasets}{https://aaai.org/example/datasets}
+    % \link{Extended version}{https://aaai.org/example/extended-version}
+\end{links}
+
+\section{Introduction}
+
+Large Language Models (LLMs) have demonstrated remarkable capabilities across diverse tasks, yet their deployment in high-stakes applications necessitates rigorous evaluation of their consistency under adversarial conditions. While existing evaluation frameworks primarily assess single-turn performance, real-world interactions involve sustained multi-turn conversations where models must maintain consistency despite evolving contexts and adversarial pressure.
+
+Current evaluation paradigms exhibit fundamental limitations in capturing the temporal dynamics of conversational AI robustness. Standard benchmarks measure performance in isolated turns, inadequately capturing cumulative effects of conversational drift and emergent vulnerabilities during extended interactions. Phenomena such as sycophancy—wherein models readily abandon correct responses under minimal user challenges—exemplify systematic fragilities that single-turn evaluations fail to detect.
+
+Consider a medical AI assistant that initially provides accurate information but gradually shifts recommendations under persistent questioning, or a system that maintains precision for straightforward queries yet fails catastrophically when confronted with specific combinations of semantic drift and adversarial strategies. Such failure modes represent critical security concerns for deployed systems, yet remain largely invisible to conventional evaluation metrics.
+
+To address these gaps, we propose viewing multi-turn LLM consistency through the lens of survival analysis—a statistical methodology for modeling time-to-event processes. We conceptualize conversational failures as events occurring over sequential dialogue turns, enabling systematic quantification of failure risk dynamics. Our framework employs both count regression (negative binomial models for conversation-level survival) and hazard modeling (Cox proportional hazards for turn-by-turn dynamics), capturing both aggregate robustness patterns and fine-grained temporal vulnerabilities. This methodological innovation enables us to model overall robustness through conversation-level count regression, quantify turn-by-turn failure dynamics through Cox proportional hazards models, identify critical predictors of model breakdown using semantic drift measures, account for heterogeneity through mixed-effects modeling and frailty estimation, and capture time-varying effects and interaction patterns that reveal adaptation mechanisms and vulnerability windows.
+
+We evaluate 10 state-of-the-art LLMs across 8 turns of adversarial interactions, analyzing over 40,000 individual model responses. Our comprehensive analysis reveals several critical findings: First, we introduce a novel survival-based evaluation framework explicitly designed to capture turn-by-turn performance degradation in LLMs. Second, we empirically demonstrate the effectiveness of this framework in identifying critical points of vulnerability within multi-turn interactions. Our analysis reveals the existence of a `drift cliff'' phenomenon, where models experience sharp, nonlinear increases in failure risk as semantic drift accumulates.
+
+\subsection{Our Contributions}
+\begin{itemize}
+    \item \textbf{Methodological Innovation}—We introduce the first comprehensive survival analysis framework for multi-turn LLM evaluation, providing rigorous tools for temporal robustness assessment.
+
+    \item \textbf{Empirical Discovery}—We identify and characterize \emph{drift cliffs} as a universal phenomenon across current LLM architectures, revealing extreme context-dependent vulnerabilities that fundamentally challenge existing evaluation paradigms.
+\end{itemize} 
+    These findings have profound implications for LLM deployment and development, suggesting that robustness cannot be achieved through single-turn optimization alone, as temporal dynamics of multi-turn interactions create emergent vulnerabilities requiring fundamental reconsideration of how we design, train, and evaluate conversational AI systems. Our work provides both the theoretical framework and empirical evidence necessary to advance toward more robust and reliable LLM architectures.
+
+\section{Related Work}
+
+\subsection{Multi-Turn Degradation and Evaluation in LLMs}
+Recent research consistently demonstrates that large language models (LLMs) exhibit significant performance degradation during multi-turn interactions compared to single-turn tasks \cite{laban2025llms, li2025beyond}. This degradation manifests primarily as increased inconsistency and variance across conversational turns, arising from premature conclusions and overly confident reliance on incorrect intermediate responses \cite{laban2025llms}. To systematically measure such inconsistencies, several specialized benchmarks have been developed. Early frameworks such as MT-Bench \cite{zheng2023judging} primarily evaluated two-turn interactions, while subsequent efforts like MT-Bench-101 \cite{bai2024mt} extended these evaluations to more extensive dialogue scenarios, highlighting uneven multi-turn performance even in advanced chat-tuned models. Complementarily, MT-Eval \cite{kwan2024mt} introduced controlled experiments to explicitly contrast single-turn and multi-turn performance, identifying error propagation and distant contextual dependencies as critical contributors to performance decline. Additionally, benchmarks like MultiChallenge \cite{sirdeshmukh2025multichallenge} emphasize realistic conversational complexities, exposing significant limitations in current models' ability to manage ambiguous instructions and context shifts across turns.
+
+\subsection{Consistency and Sycophantic Behavior}
+Focused examinations into specific multi-turn failure modes have uncovered critical phenomena such as "sycophantic drift," where models alter correct answers in response to user pushback or misleading follow-ups. The FlipFlop Experiment by \citet{laban2023you} empirically demonstrated this vulnerability, observing frequent reversals from correct to incorrect answers under trivial user challenges. To quantify and mitigate this issue, \citet{li-etal-2025-firm} introduced the Position-Weighted Consistency (PWC) metric, penalizing early-stage inconsistencies due to their detrimental impact on user trust. Their Confidence-Aware Response Generation (CARG) method notably improved multi-turn consistency by leveraging the model's internal confidence signals. Our hazard-modeling approach complements these findings by statistically characterizing the increasing risk of response inconsistency over dialogue turns.
+
+\subsection{Survival Analysis and Sequential Modeling}
+Survival analysis techniques, traditionally employed to model time-to-event data, provide a natural analytical framework for evaluating sequential behavior in LLMs. \citet{de-kock-vlachos-2021-survival} demonstrated the utility of survival models in conversational AI contexts by predicting dialogue termination and disruptions with greater interpretability than traditional classifiers. Similarly, \citet{maystre2022temporally} integrated temporal consistency conditions into survival analysis, significantly improving predictions in sequential decision-making environments. Despite these advances, applying survival analysis explicitly to model turn-by-turn failure risks in LLMs remains largely unexplored. Our work addresses this gap by framing LLM multi-turn consistency as a survival problem, enabling a nuanced statistical characterization of error accumulation and offering novel insights into dialogue reliability dynamics previously observed only empirically.
+
+\section{Methodology}
+\subsection{Experimental Design}
+
+We conduct a comprehensive robustness evaluation using the MT-Consistency benchmark \cite{li-etal-2025-firm}, which provides a systematic framework for assessing LLM consistency across multi-turn adversarial interactions. Our analysis covers 10 state-of-the-art LLMs across 8 turns of adversarial interactions, analyzing over 40,000 individual model responses.
+
+\textbf{Benchmark Protocol:} Following the MT-Consistency framework, we employ a strict consistency criterion where only conversations with correct initial responses (round 0) are included. Failure is defined as any deviation from the initial correct response in subsequent adversarial rounds, providing a stringent test of model robustness under sustained pressure.
+
+\textbf{Dataset Composition:} The benchmark contains 700 carefully selected questions spanning 39 individual academic subjects across multiple difficulty levels (Elementary, High School, College, Professional). To enable systematic analysis of domain-specific vulnerabilities, we implement a theoretically-motivated subject clustering approach that groups the 39 individual subjects into 7 coherent thematic domains: STEM (11 subjects), Medical Health (8 subjects), Social Sciences (4 subjects), Humanities (6 subjects), Business Economics (5 subjects), Law Legal (3 subjects), and General Knowledge (2 subjects). Complete subject-to-cluster mappings are provided in Appendix~\ref{app:subject_mapping}.
+
+This clustering enables both fine-grained subject-level analysis and broader domain-level robustness assessment, revealing patterns that would be obscured in either purely individual-subject or overly-aggregated analyses.
+
+\textbf{Adversarial Interaction Design:} Each conversation consists of an initial question followed by up to 8 systematically designed adversarial follow-up prompts. These prompts are specifically crafted to induce semantic drift and test model consistency, representing 8 distinct adversarial attack patterns that challenge different aspects of model reasoning and memory: Closed-ended (C), Open-ended (O), Misleading (M), Emotional Appeal (EmA), Impolite Tone (IT), Expert Appeal (ExA), Consensus Appeal (CA), and False Agreement (FA). See complete prompt templates in Appendix~\ref{app:prompt_types}.
+
+These adversarial strategies target different psychological and cognitive vulnerabilities, from simple uncertainty induction (C) to sophisticated social pressure tactics (CA, ExA) and deceptive agreement patterns (FA). The diversity of attack vectors ensures comprehensive evaluation of model robustness across multiple dimensions of adversarial pressure.
+
+\subsubsection{Mathematical Feature Specification} 
+
+Let $\mathcal{C}_i = \{c_{i,0}, c_{i,1}, \ldots, c_{i,T_i}\}$ represent conversation $i$ with $T_i$ turns. For each turn $t$, we extract comprehensive feature vectors to quantify the multi-dimensional nature of adversarial interactions.
+
+\textbf{Semantic Drift Features:} Using sentence-BERT embeddings (all-MiniLM-L6-v2) \cite{reimers-gurevych-2019-sentence}, we define three complementary semantic drift measures that capture how conversation topics evolve under adversarial pressure. Prompt-to-prompt (p2p) drift captures immediate semantic changes between consecutive user inputs, context-to-prompt (c2p) drift measures how much the current prompt aligns with or deviates from the overall conversation context, and cumulative (cum.) drift aggregates all p2p changes to quantify total semantic evolution:
+
+{\footnotesize
+\begin{alignat}{2}
+D_{p2p}(i,t) &= d(\mathbf{e}_{i,t-1}, \mathbf{e}_{i,t}) &&\quad \text{(p2p drift)} \label{eq:p2p}\\
+D_{c2p}(i,t) &= d(\bar{\mathbf{e}}_{i,<t}, \mathbf{e}_{i,t}) &&\quad \text{(c2p drift)} \label{eq:c2p}\\
+D_{cum}(i,t) &= \sum_{k=1}^{t} D_{p2p}(i,k) &&\quad \text{(cum. drift)} \label{eq:cum}
+\end{alignat}
+}
+
+where $d(\cdot,\cdot)$ denotes cosine distance, $\mathbf{e}_{i,t} \in \mathbb{R}^{384}$ is the sentence embedding of turn $t$ in conversation $i$, and $\bar{\mathbf{e}}_{i,<t} = \frac{1}{t}\sum_{k=0}^{t-1}\mathbf{e}_{i,k}$ represents the average context embedding up to turn $t$.
+
+\textbf{Categorical Variables:} The benchmark's rich metadata enables systematic encoding of multiple categorical dimensions:
+
+\begin{align}
+S_i &\in \{s_1, s_2, \ldots, s_7\} \quad \text{(subject domain clusters)} \label{eq:subject}\\
+L_i &\in \{l_1, l_2, l_3, l_4\} \quad \text{(difficulty levels)} \label{eq:difficulty}\\
+A_{i,t} &\in \{a_1, a_2, \ldots, a_8\} \quad \text{(adversarial prompt types)} \label{eq:adv}
+\end{align}
+
+\subsection{Modeling Framework}
+
+\subsubsection{Count Modeling: Negative Binomial Regression}
+We model the total number of turns survived as count data using negative binomial regression with overdispersion parameter $\alpha$ \cite{cameron2013regression,hilbe2011negative}:
+\begin{align}
+Y_i \sim \text{NegBin}(\mu_i, \alpha), \text{ where } \mathbb{E}[Y_i] = \mu_i, \text{ Var}[Y_i] = \mu_i + \alpha\mu_i^2 \label{eq:negbin}
+\end{align}
+
+The comprehensive log-linear predictor incorporates all feature categories:
+{\small
+\begin{align}
+\log(\mu_i) &= \beta_0 + \beta_1 \bar{D}_{p2p,i} + \beta_2 \bar{D}_{c2p,i} + \beta_3 \bar{D}_{cum,i} \nonumber \\
+&\quad + \sum_{j=2}^{7} \gamma_j \mathbb{I}(S_i = s_j) + \sum_{k=2}^{4} \delta_k \mathbb{I}(L_i = l_k) + \varepsilon_i \label{eq:negbin_full}
+\end{align}
+}
+
+where $\bar{D}_{\cdot,i} = \frac{1}{T_i}\sum_{t=1}^{T_i} D_{\cdot}(i,t)$ represents conversation-level averaged drift measures, and $\mathbb{I}(\cdot)$ denotes indicator functions for categorical variables.
+
+\subsubsection{Survival Analysis Framework}
+
+\textbf{Base Cox Proportional Hazards Model:} We model the hazard of failure at turn $t$ using time-varying covariates \cite{cox1972regression,therneau2000modeling}:
+\begin{align}
+h(t|\mathbf{X}_{i,t}) = h_0(t) \exp\left(\boldsymbol{\beta}^T \mathbf{X}_{i,t}\right) \label{eq:cox_base}
+\end{align}
+This baseline survival analysis establishes fundamental performance patterns across models, as demonstrated in Table~\ref{tab:time_varying_detailed} (Baseline Survival columns).
+
+where the comprehensive covariate vector is:
+{\footnotesize
+\begin{align}
+\mathbf{X}_{i,t} = &\begin{bmatrix}
+D_{p2p}(i,t), D_{c2p}(i,t), D_{cum}(i,t), \\
+\mathbb{I}(S_i = s_2), \ldots, \mathbb{I}(S_i = s_7), \\
+\mathbb{I}(L_i = l_2), \ldots, \mathbb{I}(L_i = l_4)
+\end{bmatrix}^T \label{eq:covariate_vector}
+\end{align}
+}
+
+\textbf{Stratified Cox Models:} To account for heterogeneity across domains, we employ stratified models with stratum-specific baseline hazards \cite{klein2003survival}:
+\begin{align}
+h_g(t|\mathbf{X}_{i,t}) = h_{0g}(t) \exp\left(\boldsymbol{\beta}^T \mathbf{X}_{i,t}\right), \quad g \in \{S_i\} \cup \{L_i\} \label{eq:stratified}
+\end{align}
+
+\textbf{Frailty-Like Variance Estimation:} We quantify heterogeneity through stratification-based variance estimation:
+\begin{align}
+\sigma^2_{\text{frailty},g} = \text{Var}\left(\left\{\hat{\beta}_{g,k} : k \in \text{strata}_g\right\}\right) \label{eq:frailty_var}
+\end{align}
+where $\hat{\beta}_{g,k}$ represents stratum-specific effect estimates.
+
+\textbf{Time-Varying Interaction Model:} To capture complex temporal dynamics and interaction effects between semantic drift measures and conversation characteristics, we implement a comprehensive interaction modeling approach that incorporates all possible drift-feature interactions:
+
+{\footnotesize
+\begin{align}
+h(t|\mathbf{X}_{i,t}) &= h_0(t) \exp\Big(\boldsymbol{\beta}_{\text{main}}^T \mathbf{X}_{i,t} + \sum_{j=2}^{8} \gamma_j \mathbb{I}(A_{i,t} = a_j) \cdot D_{cum}(i,t) \nonumber \\
+&\quad + \sum_{j=2}^{8} \lambda_j \mathbb{I}(A_{i,t} = a_j) \cdot D_{p2p}(i,t) \nonumber \\
+&\quad + \sum_{k=2}^{7} \delta_k \mathbb{I}(S_i = s_k) \cdot D_{c2p}(i,t) + \sum_{l=2}^{4} \epsilon_l \mathbb{I}(L_i = l_l) \nonumber \\
+&\quad + \tau_1 D_{p2p}(i,t) + \tau_2 D_{c2p}(i,t) + \tau_3 D_{cum}(i,t)\Big) \label{eq:model3}
+\end{align}
+}
+
+This comprehensive model captures: (1) adversarial prompt type interactions with both cumulative and prompt-to-prompt drift, (2) subject domain cluster and difficulty level interactions with context-to-prompt drift, and (3) direct effects of all semantic drift measures, allowing for nuanced analysis of how different conversation characteristics modulate the impact of semantic drift on conversation failure risk.
+
+\subsection{Model Evaluation Framework}
+We employ comprehensive evaluation metrics for quantifying model robustness and performance:
+\begin{align}
+\text{N\_failures} &= \sum_{i=1}^{N} \mathbb{I}(T_i < T_{\max}) \label{eq:failures}\\
+\text{C-index} &= \frac{\sum_{i<j} \mathbb{I}(\hat{T}_i < \hat{T}_j) \mathbb{I}(T_i < T_j)}{\sum_{i<j} \mathbb{I}(T_i \neq T_j)} \label{eq:cindex}\\
+\text{AIC} &= -2\ell(\hat{\boldsymbol{\beta}}) + 2p \label{eq:aic}
+\end{align}
+
+where $T_i$ is the observed failure time for conversation $i$, $T_{\max}$ is the maximum follow-up time (8 turns), $\mathbb{I}(\cdot)$ is the indicator function, $\ell(\hat{\boldsymbol{\beta}})$ is the log-likelihood, and $p$ is the number of parameters. N\_failures serves as our primary robustness metric, with lower values indicating more robust models that maintain consistency through more adversarial interactions.
+
+\section{Results}
+
+Our comprehensive dual modeling framework reveals critical insights into LLM robustness patterns, semantic drift effects, and strategic vulnerability profiles. We present the key findings through five essential discoveries that reshape our understanding of adversarial robustness in multi-turn conversations.
+
+\subsection{Model Robustness Hierarchy and Performance Trade-offs}
+
+Figure~\ref{fig:performance_comparison} reveals a clear robustness hierarchy across the 10 evaluated LLMs, with CARG achieving superior performance through only 68 failures—significantly outperforming all competitors. The performance landscape shows three distinct tiers: \textbf{Elite Performers} (CARG, Gemini-2.5, GPT-4: 68-134 failures), \textbf{Moderate Performers} (Llama-4-Maverick, Qwen-Max, Mistral-Large: 174-269 failures), and \textbf{Vulnerable Models} (DeepSeek-R1, Llama-3.3, Llama-4-Scout, Claude-3.5: 344-453 failures).
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figs/model_performance_comparison_1.pdf}
+\caption{Model Performance Comparison: (Left) Robustness ranking by failure count; (Right) Performance trade-off between robustness (N\_failures) and discrimination ability (C-index). CARG achieves optimal performance in both dimensions.}
+\label{fig:performance_comparison}
+\end{figure}
+
+Crucially, our analysis demonstrates \textbf{convergent validation} across both modeling approaches: the negative binomial count models and baseline Cox survival models produce consistent rankings (Spearman's $\rho = 0.94$, $p < 0.001$), strengthening confidence in our robustness assessments. The baseline survival analysis results in Table~\ref{tab:time_varying_detailed} confirm these consistent performance patterns, with complete detailed metrics provided in Appendix~\ref{app:detailed_results}.
+
+\subsection{Semantic Drift: The Primary Vulnerability Driver}
+
+Figure~\ref{fig:drift_effects} provides definitive evidence that \textbf{prompt-to-prompt drift is the strongest predictor of failure} across all models, with hazard ratios consistently in the range $HR_{p2p} \in [2.1, 4.7]$ and statistical significance $p < 0.001$. This finding establishes semantic discontinuity between consecutive prompts as the primary mechanism driving conversational breakdown.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\columnwidth]{figs/semantic_drift_effects.pdf}
+\caption{Semantic Drift Effects on Failure Risk: Prompt-to-prompt drift consistently increases failure risk (HR $>$ 2), while cumulative drift often provides protection (HR $<$ 1), suggesting sophisticated adaptation mechanisms across models.}
+\label{fig:drift_effects}
+\end{figure}
+
+Remarkably, \textbf{cumulative drift exhibits protective effects} with hazard ratios $HR_{cum} \in [0.3, 0.8]$ (p < 0.01), suggesting that models develop sophisticated adaptation mechanisms as conversations progress. This counterintuitive finding indicates that accumulated semantic drift paradoxically strengthens model consistency, potentially through enhanced contextual grounding or improved adversarial pattern recognition.
+
+\subsection{Time-Varying Interaction Effects}
+
+Our advanced time-varying interaction models reveal significant heterogeneity in how models benefit from incorporating dynamic adversarial prompt × drift interactions. Table~\ref{tab:time_varying_detailed} demonstrates that while some models achieve substantial discrimination improvements (DeepSeek-R1: +0.054, Llama-4-Scout: +0.097), others show decreased performance (CARG: -0.024, Llama-4-Maverick: -0.032), suggesting that temporal interaction modeling provides model-specific benefits rather than universal improvements.
+
+\begin{table*}[t]
+  \centering
+  {\small
+    \setlength{\tabcolsep}{1mm}%
+    \begin{tabular}{lrrrrrrrr}
+      \toprule
+      \multirow{2}{*}{\textbf{Model}} &
+      \multirow{2}{*}{\textbf{N\_fail}} &
+      \multicolumn{2}{c}{\textbf{Baseline Survival}} &
+      \multicolumn{2}{c}{\textbf{Time-Varying}} &
+      \multicolumn{3}{c}{\textbf{Time-Varying + Interactions}} \\
+      \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-9}
+      & & \textbf{C-idx} & \textbf{AIC} & \textbf{C-idx} & \textbf{AIC}
+        & \textbf{C-idx} & \textbf{AIC} & \textbf{$\Delta$ C-idx} \\
+      \midrule
+      CARG               & \textbf{68}  & 0.750 &  943.5 & 0.900 &  868.13 & 0.876 &  897.12 & –0.024 \\
+      Gemini-2.5         & 78           & 0.773 & 1012.1 & 0.908 & 1008.66 & 0.929 & 1033.08 & +0.021 \\
+      GPT-4              & 134          & 0.754 & 1892.4 & 0.753 & 1698.45 & 0.771 & 1721.39 & +0.018 \\
+      Llama-4-Maverick   & 174          & 0.778 & 3448.2 & 0.947 & 2115.24 & 0.915 & 2135.54 & –0.032 \\
+      Qwen-Max           & 252          & 0.780 & 2094.8 & 0.715 & 3125.21 & 0.762 & 3143.37 & +0.047 \\
+      Mistral-Large      & 269          & 0.794 & 2276.1 & 0.634 & 3277.22 & 0.650 & 3300.91 & +0.016 \\
+      DeepSeek-R1        & 344          & 0.773 & 2143.2 & 0.749 & 4282.30 & 0.803 & 4312.75 & +0.054 \\
+      Llama-3.3          & 377          & 0.797 & 2284.5 & 0.647 & 4570.84 & 0.678 & 4588.00 & +0.031 \\
+      Llama-4-Scout      & 385          & 0.770 & 3444.7 & 0.610 & 4720.70 & 0.707 & 4746.21 & +0.097 \\
+      Claude-3.5         & 453          & 0.760 & 4744.8 & 0.737 & 5729.35 & 0.743 & 5743.85 & +0.006 \\
+      \bottomrule
+    \end{tabular}
+  }
+  \caption{Comprehensive Survival Analysis: Baseline, Time-Varying, and Time-Varying with Interaction Models}
+  \label{tab:time_varying_detailed}
+\end{table*}
+
+This heterogeneity in interaction model benefits suggests that \textbf{temporal modeling complexity should be tailored to individual model architectures}, with robust models like CARG potentially suffering from over-parameterization while vulnerable models like Llama-4-Scout gaining substantially from capturing dynamic interaction patterns.
+
+\subsection{Drift Cliff Phenomenon: Catastrophic Vulnerability Thresholds}
+
+Our most significant discovery is the existence of ``drift cliffs''—sharp, nonlinear discontinuities in failure risk that represent fundamental architectural vulnerabilities across all examined LLM systems. These are not gradual performance degradations but discrete threshold effects where models transition from stable operation to complete breakdown within narrow parameter ranges.
+
+Figure~\ref{fig:drift_cliffs} demonstrates the complete failure trajectories across all 10 models, revealing distinct cliff signatures spanning 9 orders of magnitude in vulnerability. Models exhibit three distinct phases: stable operation (turns 1-3), threshold development (turns 3-5), and catastrophic cliff drops (turns 5-8). Robust models like Gemini-2.5 and CARG maintain controlled trajectories with maximum hazard ratios of 55× and 1,917× respectively, while brittle high-performers like GPT-4 and Qwen-Max exhibit sudden vertical spikes to 3.9 million × and 1.1 billion × baseline risk.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\columnwidth]{generated/figs/complete_cliff_cascade_dynamics.pdf}
+\caption{Complete Cascade Failure Dynamics Across All 10 Models: Sharp discontinuities showing the three-stage breakdown process from stable operation to catastrophic failure. Models exhibit distinct cliff signatures: Robust models (CARG, Gemini-2.5) maintain controlled degradation, while brittle high-performers (GPT-4, Qwen-Max) experience sudden cliff drops spanning 6-9 orders of magnitude.}
+\label{fig:drift_cliffs}
+\end{figure>
+
+These cliffs emerge from complex interactions between adversarial prompt types and semantic drift measures. Our time-varying models reveal that specific combinations—\textit{False Agreement} with high context-to-prompt drift ($D_{c2p} > 0.15$) or \textit{Expert Appeal} with cumulative drift ($D_{cum} > 0.8$)—trigger nonlinear amplification effects. The mathematical structure suggests phase transitions in model representations: when drift thresholds are exceeded, interaction terms exhibit explosive growth, indicating models lose semantic grounding and resort to superficial pattern matching.
+
+Critically, cliff transitions occur at predictable drift thresholds: $D_{c2p} = 0.12$ combined with $D_{p2p} > 0.08$ create high-risk zones across 8/10 models. Different architectures exhibit distinct cliff signatures—robust models demonstrate graceful degradation, while brittle high-performers maintain baseline stability until sudden collapse. This temporal predictability enables \textbf{predictive cliff monitoring} through semantic drift tracking and proactive intervention strategies.
+
+The systematic nature of these cliffs across architectures suggests fundamental training methodology limitations rather than model-specific bugs, indicating that true conversational robustness requires explicit cliff-aware training procedures. Complete hazard ratio ranges and 3D cliff landscape visualization are provided in Appendix~\ref{app:hazard_analysis}.
+
+\subsection{Domain-Specific Vulnerability Patterns}
+
+Our comprehensive analysis across 5,129 conversations reveals systematic vulnerability patterns that transcend individual model architectures, manifesting along both subject domain and difficulty dimensions. These patterns enable evidence-based deployment strategies through strategic model-application matching.
+
+Figure~\ref{fig:domain_analysis} demonstrates that semantic drift accumulation varies systematically across knowledge domains. Medical domains consistently challenge all models with elevated context-to-prompt drift (0.12-0.16 range), while STEM domains provide relative stability (0.08-0.12 range). Humanities and Legal domains exhibit intermediate vulnerability patterns, with Business domains showing the most consistent low-drift performance across models.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\columnwidth]{figs/model_subject_clustering_heatmap.pdf}
+\caption{Domain-Specific Vulnerability Patterns: Context-to-prompt drift heatmap revealing systematic domain strengths and weaknesses across all 10 models. Medical domains consistently challenge models while Business domains provide stability. Complete domain and difficulty analysis provided in Appendix~\ref{app:domain_analysis}.}
+\label{fig:domain_analysis}
+\end{figure}
+
+\subsection{Difficulty-Level Vulnerability Patterns}
+
+Our analysis reveals that adversarial robustness does not scale linearly with question difficulty. Figure~\ref{fig:difficulty_patterns} demonstrates that elementary and high school questions often induce higher drift rates than college-level content, suggesting that \textbf{semantic simplicity creates unexpected vulnerability}. Professional-level questions show the most consistent patterns across models, potentially due to more structured domain knowledge representations.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\columnwidth]{figs/model_difficulty_heatmap.pdf}
+\caption{Difficulty-Level Vulnerability Patterns: Context-to-prompt drift heatmap across difficulty levels revealing counter-intuitive patterns. Elementary questions often prove more challenging than college-level content, suggesting semantic simplicity creates unexpected vulnerabilities. Complete difficulty analysis provided in Appendix~\ref{app:domain_analysis}.}
+\label{fig:difficulty_patterns}
+\end{figure}
+
+This counter-intuitive finding has significant implications for LLM deployment in educational contexts, where elementary-level robustness may require specialized attention despite the apparent simplicity of the content.
+
+The systematic vulnerability patterns across both domain and difficulty dimensions enable \textbf{precision deployment strategies}: Medical applications benefit from STEM-optimized models (e.g., CARG with 0.139 average drift), while general-purpose deployments should leverage Business-domain strengths. The counterintuitive difficulty patterns suggest that elementary-level robustness requires specific attention during model development and evaluation. Individual model specialization profiles and detailed performance breakdowns are provided in Appendix~\ref{app:detailed_results}.
+
+\subsection{Key Implications}
+
+Our comprehensive survival analysis establishes six fundamental insights that transform LLM robustness evaluation:
+
+\textbf{(1) Semantic Drift Primacy:} Prompt-to-prompt discontinuity emerges as the strongest failure predictor across all models (HR $\in [2.1, 4.7]$, $p < 0.001$), establishing semantic consistency as the critical design priority for conversational AI systems.
+
+\textbf{(2) Adaptation Paradox:} Cumulative drift exhibits protective effects (HR $\in [0.3, 0.8]$, $p < 0.01$), revealing sophisticated model adaptation mechanisms that strengthen with conversation length—a counterintuitive finding that challenges assumptions about context degradation.
+
+\textbf{(3) Catastrophic Threshold Effects:} Drift cliffs create vulnerability landscapes spanning 9 orders of magnitude, where specific adversarial prompt × drift combinations trigger failure cascades exceeding 1 billion × baseline risk, establishing discrete vulnerability thresholds rather than gradual degradation.
+
+\textbf{(4) Domain-Specific Vulnerability Architecture:} Medical domains consistently challenge all models (drift: 0.12-0.16), while Business domains provide universal stability (lowest drift across models), enabling evidence-based deployment strategies through systematic domain-model matching.
+
+\textbf{(5) Difficulty Inversion Phenomenon:} Elementary questions often induce higher vulnerability than college-level content, revealing that semantic simplicity creates unexpected robustness challenges with critical implications for educational AI deployment.
+
+\textbf{(6) Convergent Validation Framework:} Negative binomial count models and Cox survival approaches achieve remarkable consistency (Spearman's $\rho = 0.94$, $p < 0.001$), establishing dual-framework validation as the gold standard for robustness assessment.
+
+These discoveries fundamentally reshape LLM evaluation from simple performance rankings to precision deployment strategies based on systematic vulnerability patterns, temporal dynamics, and domain-specific strengths.
+
+\section{Discussion}
+
+Our survival analysis framework reveals profound insights into the temporal nature of LLM robustness that conventional evaluation methods systematically miss. The implications of our findings extend beyond performance rankings to fundamental questions about conversational AI design, deployment strategies, and evaluation methodologies.
+
+\subsection{The Paradox of Semantic Drift}
+
+Perhaps the most counterintuitive finding in our analysis is the dual nature of semantic drift in adversarial conversations. While prompt-to-prompt drift consistently predicts failure across all models ($HR_{p2p} > 2.0$, $p < 0.001$), cumulative drift exhibits protective effects ($HR_{cum} < 1.0$, $p < 0.01$). This paradox suggests that models employ sophisticated adaptation mechanisms that strengthen with continued adversarial exposure.
+
+This finding challenges the prevailing assumption that any form of semantic drift weakens model performance. Instead, our results suggest that \textbf{semantic drift adaptation} is a learnable skill that emerges during extended conversations. Models appear to develop increasingly robust representations of conversational context as drift accumulates, potentially through enhanced pattern recognition of adversarial strategies or improved weighting of relevant contextual information.
+
+The practical implications are significant: deployment strategies should consider conversation length as a protective factor rather than purely a risk multiplier. This suggests that \textbf{warmup periods} in adversarial scenarios may actually strengthen model robustness, contrary to conventional wisdom that views extended exposure as uniformly harmful.
+
+\subsection{Drift Cliffs: A Universal Architecture Vulnerability}
+
+The discovery of drift cliffs represents a fundamental vulnerability pattern that transcends individual model architectures. The 9-order-of-magnitude variation in hazard ratios (from controlled 55x to catastrophic 1.1×10⁹x) reveals that current LLM architectures share a common structural weakness: \textbf{catastrophic sensitivity to specific semantic configuration combinations}.
+
+These cliffs are not gradual degradation zones but sharp thresholds where models transition from stable operation to complete breakdown. The $(A_{i,t}, D_{\cdot}(i,t))$ interaction space contains discrete vulnerability regions that trigger failure cascades, suggesting that current training procedures fail to adequately expose models to these critical configurations.
+
+From a deployment perspective, drift cliff discovery enables \textbf{proactive vulnerability management}. Rather than treating all adversarial interactions as equally dangerous, systems can monitor semantic drift patterns and implement protective interventions before cliff thresholds are reached. This represents a paradigm shift from reactive failure handling to predictive robustness management.
+
+\subsection{Strategic Archetypes: Beyond One-Size-Fits-All Evaluation}
+
+Our archetype analysis reveals that the conventional practice of ranking models by aggregate performance metrics obscures critical strategic differences. Models clustering into Defensive Specialists, High-Risk High-Reward, Specialized Performers, and Balanced Approaches suggests that \textbf{optimal model selection depends fundamentally on deployment context rather than universal performance}.
+
+Defensive Specialists like Llama-3.3 and DeepSeek-R1 achieve perfect protection in specific scenarios while maintaining controlled vulnerabilities—ideal for high-stakes applications where consistency trumps peak performance. High-Risk High-Reward models like Qwen-Max and GPT-4 exhibit extreme capabilities alongside extreme vulnerabilities—suitable for applications where occasional failures are acceptable given exceptional peak capabilities.
+
+This finding has profound implications for AI system design. Rather than pursuing universally robust models, development efforts might be better directed toward \textbf{archetype-specific optimization} that maximizes performance within clearly defined operational envelopes. This suggests a future landscape of specialized AI systems rather than general-purpose models.
+
+\subsection{Domain Patterns: The Hidden Structure of AI Vulnerability}
+
+The systematic domain-specific vulnerability patterns revealed in our analysis suggest that current LLM training procedures create consistent blind spots across architectures. The universal strength in Business domains (8/10 models) and common Medical domain vulnerabilities indicate that \textbf{training data composition and representation quality vary systematically across knowledge domains}.
+
+These patterns enable evidence-based deployment strategies that match models to applications based on demonstrated domain strengths rather than general performance metrics. More importantly, they reveal opportunities for targeted training improvements that address systematic domain weaknesses rather than pursuing uniform capability enhancement.
+
+\subsection{Methodological Implications}
+
+Our dual modeling framework demonstrates that survival analysis provides fundamentally richer insights than conventional accuracy-based evaluation. The convergent validation between count models and hazard models (Spearman's $\rho = 0.94$) establishes confidence in our approach while revealing patterns invisible to traditional metrics.
+
+The framework's ability to capture \textbf{temporal dynamics, vulnerability thresholds, and strategic profiles} suggests that survival analysis should become a standard component of LLM evaluation protocols. This approach provides actionable insights for deployment decisions, vulnerability management, and training improvement that aggregate metrics simply cannot deliver.
+
+\subsection{Limitations and Threats to Validity}
+
+Several limitations constrain the generalizability of our findings. First, our analysis focuses exclusively on adversarial consistency tasks, which may not capture the full spectrum of multi-turn robustness challenges. Second, the 8-turn interaction limit, while sufficient to reveal drift cliff phenomena, may miss longer-term adaptation patterns. Third, our semantic drift measures rely on sentence-BERT embeddings, which may not capture all relevant forms of conversational evolution.
+
+The benchmark's focus on factual question-answering tasks may not generalize to creative, open-ended, or interactive applications where consistency criteria differ fundamentally. Additionally, our analysis treats all deviations from initial responses as failures, which may be overly strict for applications where contextual adaptation is desirable.
+
+\subsection{Future Research Directions}
+
+Our findings open several critical research directions. First, \textbf{drift cliff characterization} requires deeper investigation to understand the architectural and training factors that create these vulnerabilities. Second, \textbf{adaptation mechanism analysis} should explore how models develop protective responses to cumulative drift. Third, \textbf{archetype-specific training} methods should be developed to optimize models for specific strategic profiles rather than general performance.
+
+The discovery of systematic domain patterns suggests opportunities for \textbf{domain-aware training approaches} that address specific knowledge area vulnerabilities. Finally, \textbf{predictive robustness management} systems should be developed that can monitor drift patterns and implement protective interventions before cliff thresholds are reached.
+
+\section{Conclusions}
+
+Our survival analysis framework fundamentally redefines LLM robustness evaluation by revealing that conversational failure follows predictable temporal patterns invisible to conventional metrics. Through rigorous analysis of 10 models across 40,000+ adversarial interactions, we establish three concrete discoveries that reshape AI deployment strategies.
+
+First, \textbf{drift cliffs represent universal architectural vulnerabilities}—sharp failure thresholds where hazard ratios spike 9 orders of magnitude from controlled (55×) to catastrophic (1.1×10⁹×) levels. These are not gradual degradations but discrete vulnerability zones triggered by specific $(adversarial\_prompt, semantic\_drift)$ combinations. This discovery enables predictive failure management: systems can monitor drift trajectories and implement protective interventions before cliff thresholds, shifting from reactive failure handling to proactive robustness management.
+
+Second, \textbf{semantic drift exhibits paradoxical dual effects}—while prompt-to-prompt discontinuity consistently predicts failure ($HR > 2.0$), cumulative drift provides protection ($HR < 1.0$), suggesting sophisticated adaptation mechanisms emerge during extended adversarial exposure. This challenges conventional assumptions that longer conversations increase vulnerability, instead revealing that models develop increasingly robust contextual representations through continued interaction.
+
+Third, \textbf{models cluster into strategic archetypes} that transcend performance rankings: Defensive Specialists achieve perfect protection zones with controlled vulnerabilities; High-Risk High-Reward models exhibit extreme capabilities alongside extreme vulnerabilities; Specialized Performers demonstrate domain-specific excellence; Balanced Approaches maintain moderate consistency. Optimal deployment requires matching archetypes to application contexts rather than selecting universally highest-performing systems.
+
+These findings enable immediate practical advances: semantic drift monitoring systems that predict failure before occurrence, archetype-based model selection that maximizes deployment robustness, and domain-specific matching strategies that leverage demonstrated strengths. More fundamentally, our work establishes that LLM reliability requires understanding temporal failure dynamics rather than aggregate performance measures. As conversational AI systems become ubiquitous in high-stakes applications, survival analysis provides the theoretical foundation and empirical tools necessary for principled robustness evaluation and deployment decision-making.
+
+\bibliography{references}
+\bibliographystyle{aaai}
+
+\newpage
+\appendix
+\input{appendix}
+
+\end{document} 

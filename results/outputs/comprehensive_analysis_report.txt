@@ -1,0 +1,33 @@
+🔍 COMPREHENSIVE LLM ANALYSIS REPORT
+==================================================
+
+📊 ANALYSIS OVERVIEW:
+   • Models analyzed: 10
+   • Subject clusters: 7
+   • Difficulty levels: 4
+
+🏆 TOP PERFORMERS:
+   • Most Robust Overall: gemini_25 (drift: 0.095)
+   • Best STEM Performance: gemini_25 (drift: 0.094)
+
+📈 STATISTICAL FINDINGS:
+   • Subject Cluster Differences (Context Drift): ✅ Significant (p=0.0110)
+   • Difficulty Level Differences (Context Drift): ❌ Not significant (p=0.4483)
+   • Model Differences (Context Drift): ✅ Significant (p=0.0000)
+
+📚 SUBJECT CLUSTER INSIGHTS:
+   • Business_Economics: 0.121 ± 0.017
+   • General_Knowledge: 0.121 ± 0.017
+   • Humanities: 0.115 ± 0.018
+   • Law_Legal: 0.122 ± 0.020
+   • Medical_Health: 0.115 ± 0.013
+   • STEM: 0.114 ± 0.016
+   • Social_Sciences: 0.116 ± 0.019
+
+🎯 DIFFICULTY LEVEL INSIGHTS:
+   • college: 0.118 ± 0.018
+   • elementary: 0.115 ± 0.016
+   • high_school: 0.116 ± 0.015
+   • professional: 0.119 ± 0.020
+
+✅ Analysis complete! Check generated/ folder for detailed results.

@@ -1,0 +1,15 @@
+{
+  "most_vulnerable_model": {
+    "model": "qwen_max",
+    "max_hr": 1106942750.102806
+  },
+  "most_protected_model": {
+    "model": "llama_33",
+    "protection_pct": 100.0
+  },
+  "most_specialized_model": {
+    "model": "CARG",
+    "specialization_gap": 1.69281045751634
+  },
+  "model_rankings": {}
+}

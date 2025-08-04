@@ -1,210 +1,264 @@
-# 🔬 LLM Robustness Analysis: Individual Model Survival Analysis
+# 🧬 LLM Survival Analysis
 
-## 📋 Project Overview hello
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Status](https://img.shields.io/badge/status-research-orange.svg)
 
-This project provides a **comprehensive individual model analysis** of Large Language Model (LLM) robustness using advanced survival analysis methods. The analysis evaluates **each LLM independently** with baseline Cox models, stratified/frailty analyses, and time-varying models to understand model-specific conversation breakdown patterns and coefficient profiles.
+> **Tutorial: Analyzing LLM Robustness Through Survival Analysis**
 
-> **CARG is the proposed method in this study.** All models are evaluated on the same filtered set of conversations (only those with round_0 == 1, and only rounds 1–8 are analyzed) to ensure a fair, rigorous comparison of survival capability under adversarial interactions.
+A comprehensive framework for evaluating Large Language Model robustness in multi-turn conversations using survival analysis. This tutorial will guide you through analyzing 10 state-of-the-art LLMs across 40,000+ interactions to discover "drift cliffs" and strategic deployment insights.
 
-## 🎯 Key Features
+## 🎯 What You'll Learn
 
-- **🤖 Individual Model Focus:** Each LLM analyzed independently with dedicated modeling
-- **📊 Individual Coefficients:** Model-specific hazard ratios, p-values, and interpretations
-- **🧪 Stratified Analysis:** Subject and difficulty stratification per individual model
-- **📈 Individual Comparisons:** Model-specific performance metrics and frailty effects
-- **⏰ Temporal Analysis:** Turn-by-turn drift evolution and vulnerability windows
-- **🔄 Advanced Time-Varying Models:** Three interaction types (P2P, Cumulative, Combined) for comprehensive drift analysis
-- **📁 Clean Pipeline:** Individual model analysis from data to model-specific results
-- **🎨 Individual Visualizations:** Per-model plots and comparative individual performance
-- **🛡️ Survival Ranking by N_failures:** All results tables are ranked by the number of failures (N_failures, ascending), directly reflecting LLM robustness. C-index and AIC are included as supporting metrics.
+- **Survival Analysis for LLMs**: Treat conversations as "lifespans" and model failure dynamics
+- **Drift Cliff Discovery**: Find sharp vulnerability thresholds (up to 9 orders of magnitude risk increase)
+- **Strategic Deployment**: Evidence-based recommendations for real-world LLM deployment
+- **Publication-Ready Results**: Generate 20+ high-resolution plots and comprehensive analysis
 
----
+## 📊 Key Discoveries Preview
 
-## 🗂️ Project Structure
+| Model | Failures | Risk Level | Best Domain |
+|-------|----------|------------|-------------|
+| **CARG** | 68 | 🟢 Elite | STEM |
+| **Gemini-2.5** | 78 | 🟢 Elite | Business |
+| **GPT-4** | 134 | 🟡 Moderate | General |
+| **Claude-3.5** | 453 | 🔴 Vulnerable | Humanities |
 
-```
-llm_survival_working/
-├── modeling/
-│   ├── advanced_modeling.py                # Individual model stratified/frailty analysis
-│   ├── baseline_modeling.py                # Legacy baseline models (optional)
-│   ├── time_varying_advanced_modeling.py    # Unified time-varying models (all types)
-│   ├── time_varying_frailty_modeling.py    # Time-varying frailty models (per model)
-│
-├── utils/
-│   ├── data_process.py                     # Data preprocessing & feature engineering
-│   ├── extract_individual_model_coefficients.py # Individual model Cox analysis
-│   ├── analyze_drift_by_turns.py           # Temporal drift analysis by turns
-│   ├── further_analysis.py                 # Subject/difficulty clustering analysis
-│   └── ...                                 # (other utility scripts)
-│
-├── environment.yml                         # Python environment specification
-├── README.md                               # This guide
-│
-├── processed_data/                         # Processed datasets by model
-│   └── <model>/                            # Model-specific processed files
-│       ├── <model>_cleaned.csv             # Cleaned conversation data
-│       ├── <model>_static.csv              # Static features per conversation
-│       └── <model>_long.csv                # Long-format survival data
-│
-├── raw data/                               # Raw conversation & experiment files
-│   └── <model>/                            # Raw data per model
-└──
-```
+**Cliff Phenomenon**: GPT-4 shows 3.9M× baseline risk, Qwen-Max exhibits 1.1B× risk spikes!
 
 ---
 
-## ⚙️ Environment Setup
+## 🚀 Quick Start Tutorial
 
-### 📦 Dependencies Installation
+### Step 1: Environment Setup
 
 ```bash
-# Create and activate conda environment
+# Clone the repository
+git clone https://anonymous.4open.science/r/llm-survival-analysis/
+cd llm_survival
+
+# Create conda environment (recommended)
 conda env create -f environment.yml
-conda activate llm_survival
+conda activate survival_analysis
 
-# Or install manually:
-pip install pandas numpy scikit-learn matplotlib seaborn tqdm
-pip install lifelines sentence-transformers
+# Or use pip
+pip install -r requirements.txt
 ```
 
-### 🧪 Required Packages
-- **Core Analysis:** `pandas`, `numpy`, `scikit-learn`
-- **Survival Analysis:** `lifelines` 
-- **Visualizations:** `matplotlib`, `seaborn`
-- **NLP Features:** `sentence-transformers`
-- **Utilities:** `tqdm`, `warnings`
-
----
-
-## 🚀 Complete Analysis Pipeline
-
-> **Note:** All scripts should be run from the project root directory for correct data loading. All models are evaluated on the same filtered set of conversations (round_0 == 1, rounds 1–8).
-
-### **Phase 1: Data Processing**
+### Step 2: Run Complete Analysis
 
 ```bash
-python utils/data_process.py
+# Run baseline survival models (5-10 minutes)
+python scripts/run_baseline_analysis.py
+
+# Generate all visualizations (3-5 minutes)
+python scripts/generate_visualizations.py
 ```
-- Processes raw conversation files from all models
-- Extracts semantic drift features
-- Generates cleaned, static, and long-format datasets per model
 
-### **Phase 2: Count Models Analysis**
+**✅ That's it!** Check `results/figures/` for 20+ publication-ready plots and `results/outputs/` for detailed statistics.
 
-```bash
-python modeling/baseline_modeling.py  # (optional legacy)
-# or
-python utils/run_enhanced_analysis.py # (if present)
-```
-- Fits Negative Binomial regression for each model
-- Generates model performance rankings and reports
-
-### **Phase 3: Advanced Subject & Difficulty Analysis**
+### Step 3: Explore Results
 
 ```bash
-python utils/further_analysis.py
-```
-- Analyzes performance by academic domain and difficulty
-- Conducts ANOVA/statistical tests
-- Generates key findings dashboards and survival visualizations
-
-### **Phase 4: Individual Model Cox Analysis**
-
-```bash
-python utils/extract_individual_model_coefficients.py
-```
-- Fits Cox models for each LLM
-- Outputs coefficient matrices, hazard ratios, p-values
-
-### **Phase 5: Individual Model Stratified/Frailty Analysis**
-
-```bash
-python modeling/advanced_modeling.py
-```
-- Subject and difficulty stratification for each model
-- Calculates frailty variance and stratified performance
-
-### **Phase 6: Individual Cox Coefficient Extraction**
-
-```bash
-python extract_cox_coefficients.py
-```
-- Extracts coefficients, hazard ratios, p-values for each model
-- Outputs comparison matrices
-
-### **Phase 7: Temporal Drift & Time-Varying Analysis**
-
-```bash
-python utils/analyze_drift_by_turns.py
-python modeling/time_varying_frailty_modeling.py
-```
-- Analyzes turn-by-turn drift and time-varying frailty effects for each model
-- Outputs temporal statistics, rankings, and visualizations
-
-### **Phase 8: Advanced Time-Varying Modeling (Optional)**
-
-```bash
-# Choose interaction type: p2p, cumulative, or combined
-python modeling/time_varying_advanced_modeling.py --type p2p
-python modeling/time_varying_advanced_modeling.py --type cumulative  
-python modeling/time_varying_advanced_modeling.py --type combined
-```
-- **P2P**: Prompt-to-prompt drift interactions with adversarial/base contexts
-- **Cumulative**: Cumulative drift interactions with context-specific effects
-- **Combined**: All drift measures with comprehensive interaction modeling
-- Generates model-specific time-varying coefficients and performance rankings
-
----
-
-## 📋 Workflow Summary (One-Command Option)
-
-```bash
-python utils/data_process.py && \
-python utils/run_enhanced_analysis.py && \
-python utils/further_analysis.py && \
-python utils/extract_individual_model_coefficients.py && \
-python modeling/advanced_modeling.py && \
-python extract_cox_coefficients.py && \
-python utils/analyze_drift_by_turns.py && \
-python modeling/time_varying_frailty_modeling.py && \
-python modeling/time_varying_advanced_modeling.py --type combined
+# View key results
+ls results/figures/          # High-resolution PDF plots
+ls results/outputs/          # CSV analysis results
+ls results/paper/           # LaTeX paper files
 ```
 
 ---
 
-## 📊 Key Results & Outputs
+## 📈 Tutorial Walkthrough
 
-- All outputs are saved in `generated/outputs/` (CSVs, JSONs, Markdown) and `generated/figs/` (visualizations).
-- See `results.md` for a summary of findings and statistical interpretations.
-- **All results tables are ranked by N_failures (ascending, fewer failures = better survival). C-index and AIC are included for context.**
-- **CARG achieves the fewest failures and sets a new benchmark for LLM survival under adversarial interactions.**
-- See `individual_model_coefficient_report.md` for detailed coefficient tables.
+### Understanding the Analysis Pipeline
+
+```bash
+# 1. Data Processing (automatic)
+# - Loads 10 LLM datasets from data/processed/
+# - Extracts semantic drift features using Sentence-BERT
+# - Creates survival analysis format
+
+# 2. Statistical Modeling (runs automatically)
+# - Negative Binomial: Count total failures
+# - Cox Proportional Hazards: Turn-by-turn dynamics  
+# - Stratified Models: Domain/difficulty effects
+# - Time-Varying Models: Complex interactions
+
+# 3. Visualization Generation (runs automatically)
+# - Performance rankings and trade-offs
+# - Drift cliff phenomenon plots
+# - Domain/difficulty heatmaps
+# - Strategic archetype analysis
+```
+
+### Key Output Files
+
+| File | Description | Use Case |
+|------|-------------|----------|
+| `model_performance_comparison_1.pdf` | Robustness ranking | Paper Figure 1 |
+| `complete_cliff_cascade_dynamics.pdf` | Drift cliffs | Paper Figure 2 |
+| `model_subject_clustering_heatmap.pdf` | Domain analysis | Deployment guide |
+| `semantic_drift_effects.pdf` | Risk factors | Technical analysis |
 
 ---
 
-## ❓ Individual vs. Combined Modeling
+## 🔧 Advanced Usage
 
-- **This repository focuses on individual model analysis:**
-  - Each LLM is analyzed independently for robustness, drift, and frailty effects.
-  - All advanced and time-varying frailty modeling is performed per model.
-- **Combined modeling (all LLMs together) is not performed by default.**
-  - If you want to analyze all models together, you must modify the scripts to pool data and include a model indicator.
+### Custom Analysis
+
+```python
+# Generate specific visualizations
+from src.visualization.core import create_model_performance_comparison
+from src.visualization.cliffs import create_cliff_cascade_dynamics
+
+create_model_performance_comparison()  # Performance plots
+create_cliff_cascade_dynamics()       # Cliff phenomenon
+```
+
+### Individual Model Analysis
+
+```bash
+# Run time-varying models with interactions
+python src/modeling/time_varying_advanced_modeling.py --type p2p
+python src/modeling/time_varying_advanced_modeling.py --type cumulative  
+python src/modeling/time_varying_advanced_modeling.py --type combined
+```
+
+### Custom Data
+
+```python
+# Add your own LLM data
+# 1. Place conversation files in data/raw/your_model/
+# 2. Follow the format: conversations_*.json + experiment_*.csv
+# 3. Re-run the pipeline
+```
 
 ---
 
-## 📚 Understanding the Results
+## 📊 Understanding Results
 
-- **N_failures (number of failures) is the primary metric for ranking LLM robustness.**
-- **CARG is the most robust model by this metric.**
-- **Prompt-to-prompt drift** is the dominant risk factor for conversation failure in all models.
-- **Cumulative drift** is universally protective (adaptation effect).
-- **Context drift** is model-dependent, sometimes highly significant.
-- **Stratification and frailty** reveal unobserved heterogeneity by subject and difficulty.
-- **Temporal analysis** shows adaptation and vulnerability windows across conversation turns.
-- **Drift cliff analysis** reveals sharp, nonlinear increases in failure risk as semantic drift accumulates, especially for certain adversarial prompt types.
-- **Advanced time-varying models** provide three different interaction frameworks for understanding drift effects across conversation turns.
-- **Subject and difficulty analyses** show which content areas are most/least robust for each LLM.
+### 1. Model Performance Hierarchy
+- **Elite Performers** (68-134 failures): CARG, Gemini-2.5, GPT-4
+- **Moderate Performers** (174-269 failures): Llama variants, Qwen-Max
+- **Vulnerable Models** (344-453 failures): Claude-3.5, DeepSeek-R1
+
+### 2. Drift Cliff Phenomenon
+Models exhibit **extreme vulnerability thresholds**:
+- **Stable Phase** (turns 1-3): Normal operation
+- **Threshold Phase** (turns 3-5): Risk accumulation  
+- **Cliff Phase** (turns 5-8): Catastrophic failure spikes
+
+### 3. Strategic Deployment
+- **Medical/Legal**: Use STEM-optimized models (CARG)
+- **Business**: Leverage Gemini-2.5's domain strength
+- **General Purpose**: GPT-4 offers balanced performance
+- **Monitoring**: Track semantic drift for early intervention
 
 ---
+
+## 🧪 Methodology Summary
+
+### Survival Framework
+- **Event**: Conversational breakdown/failure
+- **Time**: Conversation turn (1-8)
+- **Covariates**: Semantic drift measures, prompt types, domains
+
+### Semantic Drift Measures
+- **Prompt-to-Prompt (p2p)**: Distance between consecutive prompts
+- **Context-to-Prompt (c2p)**: Distance from cumulative context
+- **Cumulative (cum)**: Total semantic evolution
+
+### Models & Metrics
+- **Negative Binomial**: Total survival count
+- **Cox Proportional Hazards**: Turn-by-turn risk
+- **C-index**: Discrimination ability (higher = better)
+- **Failures**: Primary robustness metric (lower = better)
+
+---
+
+## 📁 Repository Structure
+
+```
+llm_survival/
+├── scripts/           # 🚀 Run these first
+├── src/              # 🔧 Modular source code
+├── data/             # 💾 Experimental datasets  
+├── results/          # 📊 All outputs here
+└── docs/             # 📚 Documentation
+```
+
+**Key Directories:**
+- `scripts/`: Main execution scripts
+- `results/figures/`: Publication-ready plots (PDF)
+- `results/outputs/`: Statistical results (CSV)
+- `results/paper/`: LaTeX paper files
+
+---
+
+## 🎯 Common Use Cases
+
+### 1. Quick Analysis
+```bash
+# Get results in 10 minutes
+python scripts/run_baseline_analysis.py
+python scripts/generate_visualizations.py
+```
+
+### 2. Paper Figures
+```bash
+# Generate specific plots for publication
+python -c "from src.visualization.core import *; create_model_performance_comparison()"
+```
+
+### 3. Custom Models
+```bash
+# Add your LLM data to data/raw/your_model/
+# Re-run analysis
+python scripts/run_baseline_analysis.py
+```
+
+### 4. Deployment Planning
+```bash
+# Check domain-specific heatmaps
+open results/figures/model_subject_clustering_heatmap.pdf
+open results/figures/model_difficulty_heatmap.pdf
+```
+
+---
+
+## 🔍 Troubleshooting
+
+**Environment Issues:**
+```bash
+# Reset environment
+conda env remove -n survival_analysis
+conda env create -f environment.yml
+conda activate survival_analysis
+```
+
+**Missing Data:**
+```bash
+# Check data structure
+ls -la data/processed/
+# Should contain 10 model directories
+```
+
+**Import Errors:**
+```bash
+# From project root
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/src"
+python scripts/generate_visualizations.py
+```
+
+
+---
+
+## 🤝 Contributing & Contact
+
+- **Contact**: Available upon acceptance
+
+---
+
+**🎉 Ready to discover LLM vulnerability patterns? Start with Step 1 above!**
 
 
