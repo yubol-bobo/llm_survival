@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from visualization.core import create_model_performance_comparison, create_semantic_drift_effects
 from visualization.cliffs import (create_drift_cliff_visualization, create_cliff_cascade_dynamics, 
-                                 create_3d_cliff_landscape, create_dramatic_cliff_profiles)
+                                 create_3d_cliff_landscape, create_dramatic_cliff_profiles, create_cumulative_risk_dynamics,
+                                 create_cumulative_risk_by_subject_clusters, create_cumulative_risk_by_difficulty_levels)
 from visualization.trajectories import create_all_trajectory_plots
 from visualization.heatmaps import create_all_heatmaps
 from visualization.profiles import create_all_profile_visualizations
@@ -48,6 +49,15 @@ def main():
         
         create_dramatic_cliff_profiles()
         print("✅ Dramatic cliff profiles plot created")
+        
+        create_cumulative_risk_dynamics()
+        print("✅ Cumulative risk dynamics plot created")
+        
+        create_cumulative_risk_by_subject_clusters()
+        print("✅ Subject cluster cumulative risk analysis created")
+        
+        create_cumulative_risk_by_difficulty_levels()
+        print("✅ Difficulty level cumulative risk analysis created")
         
         # Trajectory visualizations
         print("\n🛤️  TRAJECTORY VISUALIZATIONS")

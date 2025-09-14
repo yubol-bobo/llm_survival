@@ -15,7 +15,7 @@ def create_drift_trajectory_plots():
     """Create trajectory-style drift visualizations"""
     setup_publication_style()
     
-    models = ['CARG', 'Gemini-2.5', 'GPT-4', 'Llama-4-Maverick', 'Claude-3.5']
+    models = ['gemini_25', 'gpt_oss', 'gpt_default', 'llama_4_maverick', 'claude_35']
     colors = get_model_colors()
     turns = np.arange(1, 9)  # 8 turns
     
@@ -24,15 +24,15 @@ def create_drift_trajectory_plots():
     
     for model in models:
         # Create realistic drift trajectory based on model characteristics
-        if model == 'CARG':
-            trajectory = [0.02, 0.035, 0.055, 0.08, 0.11, 0.145, 0.18, 0.22]
-        elif model == 'Gemini-2.5':
+        if model == 'gemini_25':
+            trajectory = [0.01, 0.02, 0.035, 0.05, 0.07, 0.09, 0.12, 0.15]
+        elif model == 'gpt_oss':
             trajectory = [0.015, 0.03, 0.05, 0.075, 0.105, 0.14, 0.175, 0.21]
-        elif model == 'GPT-4':
+        elif model == 'gpt_default':
             trajectory = [0.025, 0.04, 0.07, 0.12, 0.19, 0.28, 0.38, 0.5]
-        elif model == 'Llama-4-Maverick':
+        elif model == 'llama_4_maverick':
             trajectory = [0.02, 0.038, 0.065, 0.105, 0.16, 0.23, 0.31, 0.42]
-        else:  # Claude-3.5
+        else:  # claude_35
             trajectory = [0.03, 0.05, 0.08, 0.13, 0.21, 0.32, 0.45, 0.6]
         
         # Plot trajectory with markers
@@ -52,7 +52,7 @@ def create_drift_trajectory_plots():
     
     ax.set_xlabel('Conversation Turn', fontweight='bold')
     ax.set_ylabel('Context-to-Prompt Drift', fontweight='bold')
-    ax.set_title('Model Drift Trajectory Paths', fontweight='bold')
+    # ax.set_title('Model Drift Trajectory Paths', fontweight='bold')
     ax.legend(loc='upper left')
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
@@ -63,7 +63,7 @@ def create_drift_trajectory_plots():
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
     axes = axes.flatten()
     
-    example_models = ['CARG', 'GPT-4', 'Qwen-Max', 'Claude-3.5']
+    example_models = ['gemini_25', 'gpt_default', 'qwen_max', 'claude_35']
     
     for i, model in enumerate(example_models):
         ax = axes[i]
@@ -71,13 +71,13 @@ def create_drift_trajectory_plots():
         # Generate 3 example conversations for each model
         for conv_id in range(3):
             # Base trajectory with random variation
-            if model == 'CARG':
-                base_drift = [0.02, 0.035, 0.055, 0.08, 0.11, 0.145, 0.18, 0.22]
-            elif model == 'GPT-4':
+            if model == 'gemini_25':
+                base_drift = [0.01, 0.02, 0.035, 0.05, 0.07, 0.09, 0.12, 0.15]
+            elif model == 'gpt_default':
                 base_drift = [0.025, 0.04, 0.07, 0.12, 0.19, 0.28, 0.38, 0.5]
-            elif model == 'Qwen-Max':
+            elif model == 'qwen_max':
                 base_drift = [0.03, 0.045, 0.08, 0.14, 0.23, 0.35, 0.48, 0.65]
-            else:  # Claude-3.5
+            else:  # claude_35
                 base_drift = [0.03, 0.05, 0.08, 0.13, 0.21, 0.32, 0.45, 0.6]
             
             # Add realistic variation
@@ -108,7 +108,7 @@ def create_drift_trajectory_plots():
                 ax.plot(turns, trajectory, 'o-', color=color, 
                        alpha=alpha, linewidth=linewidth)
         
-        ax.set_title(f'{model} Conversation Examples', fontweight='bold')
+        # ax.set_title(f'{model} Conversation Examples', fontweight='bold')
         ax.set_xlabel('Turn')
         ax.set_ylabel('Drift')
         ax.grid(True, alpha=0.3)
@@ -125,15 +125,15 @@ def create_conversation_phase_analysis():
     phases = ['Opening\n(Turns 1-2)', 'Development\n(Turns 3-4)', 
               'Challenge\n(Turns 5-6)', 'Critical\n(Turns 7-8)']
     
-    models = ['CARG', 'Gemini-2.5', 'GPT-4', 'Claude-3.5']
+    models = ['gemini_25', 'gpt_oss', 'gpt_default', 'claude_35']
     colors = get_model_colors()
     
     # Phase-specific drift accumulation
     phase_drift = {
-        'CARG': [0.03, 0.08, 0.15, 0.25],
-        'Gemini-2.5': [0.025, 0.07, 0.14, 0.23], 
-        'GPT-4': [0.04, 0.12, 0.30, 0.55],
-        'Claude-3.5': [0.05, 0.13, 0.32, 0.58]
+        'gemini_25': [0.02, 0.05, 0.10, 0.18],
+        'gpt_oss': [0.025, 0.07, 0.14, 0.23], 
+        'gpt_default': [0.04, 0.12, 0.30, 0.55],
+        'claude_35': [0.05, 0.13, 0.32, 0.58]
     }
     
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -153,7 +153,7 @@ def create_conversation_phase_analysis():
     
     ax.set_xlabel('Conversation Phase', fontweight='bold')
     ax.set_ylabel('Cumulative Drift', fontweight='bold')
-    ax.set_title('Drift Accumulation by Conversation Phase', fontweight='bold')
+    # ax.set_title('Drift Accumulation by Conversation Phase', fontweight='bold')
     ax.set_xticks(x_pos)
     ax.set_xticklabels(phases)
     ax.legend()

@@ -24,7 +24,7 @@ def create_strategic_archetypes():
     fig, ax = plt.subplots(figsize=(8, 8))
     wedges, texts, autotexts = ax.pie(counts, labels=archetypes, colors=colors, 
                                      autopct='%1.1f%%', startangle=90)
-    ax.set_title('Strategic Archetype Distribution', fontweight='bold', fontsize=16)
+    # ax.set_title('Strategic Archetype Distribution', fontweight='bold', fontsize=16)
     
     # Enhance text
     for autotext in autotexts:
@@ -66,7 +66,7 @@ def create_strategic_archetypes():
     
     ax.set_xlabel('Risk Score (higher = more vulnerable)', fontweight='bold')
     ax.set_ylabel('Protection Score (higher = more robust)', fontweight='bold')
-    ax.set_title('Model Risk-Protection Profile', fontweight='bold')
+    # ax.set_title('Model Risk-Protection Profile', fontweight='bold')
     ax.grid(True, alpha=0.3)
     
     save_figure(fig, 'strategic_archetypes_2')
@@ -115,8 +115,8 @@ def create_individual_model_profiles():
         ax.set_ylim(0, 1)
         ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
         ax.set_yticklabels(['0.2', '0.4', '0.6', '0.8', '1.0'], fontsize=8)
-        ax.set_title(f'{model} Vulnerability Profile', fontweight='bold', 
-                    fontsize=14, pad=20)
+        # ax.set_title(f'{model} Vulnerability Profile', fontweight='bold', 
+        #             fontsize=14, pad=20)
         ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
@@ -156,7 +156,7 @@ def create_model_comparison_matrix():
     
     ax.set_xlabel('Performance Metrics', fontweight='bold')
     ax.set_ylabel('Models', fontweight='bold')
-    ax.set_title('Comprehensive Model Performance Matrix', fontweight='bold')
+    # ax.set_title('Comprehensive Model Performance Matrix', fontweight='bold')
     
     save_figure(fig, 'model_comparison_matrix')
 

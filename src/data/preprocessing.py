@@ -7,8 +7,8 @@ from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 
 
-RAW_DATA_DIR = 'raw data'
-PROCESSED_DATA_DIR = 'processed_data'
+RAW_DATA_DIR = 'data/raw'
+PROCESSED_DATA_DIR = 'data/processed'
 EMBEDDING_MODEL = 'all-MiniLM-L6-v2'
 
 os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
@@ -17,17 +17,22 @@ os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
 model_embed = SentenceTransformer(EMBEDDING_MODEL)
 
 # Load question metadata for subject/level info
-meta_df = pd.read_csv('raw data/cleaned_data_with_clusters.csv')
+meta_df = pd.read_csv('data/raw/cleaned_data_with_clusters.csv')
 
 def cosine_dist(a, b):
     if a is None or b is None:
         return None
     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-for model in os.listdir(RAW_DATA_DIR):
-# for model in ['mistral_large', 'qwen_max']:
+# Only process the three new models
+print("🚀 Processing new models: qwen_3, gpt_oss, gemini_25")
+print("=" * 60)
+
+for model in ['qwen_3', 'gpt_oss', 'gemini_25']:
+    print(f"\n📊 Processing model: {model}")
     model_path = os.path.join(RAW_DATA_DIR, model)
     if not os.path.isdir(model_path):
+        print(f"⚠️ Directory not found: {model_path}")
         continue
     out_dir = os.path.join(PROCESSED_DATA_DIR, model)
     os.makedirs(out_dir, exist_ok=True)
@@ -183,3 +188,11 @@ for model in os.listdir(RAW_DATA_DIR):
 
     pd.DataFrame(static_rows).to_csv(os.path.join(out_dir, f'{model}_static.csv'), index=False)
     pd.DataFrame(long_rows).to_csv(os.path.join(out_dir, f'{model}_long.csv'), index=False)
+    
+    print(f"✅ {model} processing completed!")
+    print(f"   • Static data: {len(static_rows)} conversations")
+    print(f"   • Long data: {len(long_rows)} turns")
+    print(f"   • Output directory: {out_dir}")
+
+print("\n🎉 All models processed successfully!")
+print("=" * 60)

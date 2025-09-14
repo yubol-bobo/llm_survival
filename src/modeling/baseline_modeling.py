@@ -77,7 +77,7 @@ def process_subject_clustering():
     print("🏷️ CREATING SUBJECT CLUSTERS")
     print("=" * 50)
     try:
-        cleaned_data = pd.read_csv('./raw data/cleaned_data - cleaned_data.csv')
+        cleaned_data = pd.read_csv('data/raw/cleaned_data_with_clusters.csv')
         print(f"✅ Loaded {len(cleaned_data)} questions")
         subject_clusters = create_subject_clusters()
         cleaned_data['subject_cluster'] = cleaned_data['subject'].apply(
@@ -88,7 +88,7 @@ def process_subject_clustering():
         for cluster, count in cluster_counts.items():
             percentage = count / len(cleaned_data) * 100
             print(f"   • {cluster}: {count} questions ({percentage:.1f}%)")
-        cleaned_data.to_csv('./raw data/cleaned_data_with_clusters.csv', index=False)
+        cleaned_data.to_csv('data/raw/cleaned_data_with_clusters.csv', index=False)
         print("✅ Subject clustering complete!")
         return cleaned_data, subject_clusters
     except Exception as e:
@@ -104,7 +104,7 @@ class LLMRobustnessAnalyzer:
     def load_existing_data(self):
         print("\n🔍 LOADING EXISTING DATA")
         print("=" * 50)
-        processed_dir = './processed_data'
+        processed_dir = 'data/processed'
         if not os.path.exists(processed_dir):
             print("❌ No processed_data directory found!")
             return
@@ -243,10 +243,10 @@ class LLMRobustnessAnalyzer:
         import pandas as pd
         import os
         # Ensure output directory exists
-        os.makedirs('generated/figs', exist_ok=True)
+        os.makedirs('results/figures', exist_ok=True)
         # Load the CSVs
-        model_df = pd.read_csv('generated/outputs/model_analysis_results.csv')
-        surv_df = pd.read_csv('generated/outputs/survival_analysis_results.csv')
+        model_df = pd.read_csv('results/outputs/model_analysis_results.csv')
+        surv_df = pd.read_csv('results/outputs/survival_analysis_results.csv')
         # Merge for joint plots
         merged = pd.merge(model_df, surv_df, on='Model')
         # Set style
@@ -259,7 +259,7 @@ class LLMRobustnessAnalyzer:
         plt.xlabel('C-index')
         plt.ylabel('Model')
         plt.tight_layout()
-        plt.savefig('generated/figs/llm_cindex_by_model.png', dpi=300)
+        plt.savefig('results/figures/llm_cindex_by_model.png', dpi=300)
         plt.close()
         # 2. Bar plot: Drift_coef by model, color by p-value significance
         plt.figure(figsize=(10,6))
@@ -278,7 +278,7 @@ class LLMRobustnessAnalyzer:
         plt.ylabel('Model')
         plt.legend(title='Drift p-value', bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
-        plt.savefig('generated/figs/llm_drift_coef_by_model.png', dpi=300)
+        plt.savefig('results/figures/llm_drift_coef_by_model.png', dpi=300)
         plt.close()
         # 3. Bar plot: AIC by model
         plt.figure(figsize=(10,6))
@@ -288,7 +288,7 @@ class LLMRobustnessAnalyzer:
         plt.xlabel('AIC')
         plt.ylabel('Model')
         plt.tight_layout()
-        plt.savefig('generated/figs/llm_aic_by_model.png', dpi=300)
+        plt.savefig('results/figures/llm_aic_by_model.png', dpi=300)
         plt.close()
         # 4. Scatter plot: Drift_coef vs C-index
         plt.figure(figsize=(8,6))
@@ -298,7 +298,7 @@ class LLMRobustnessAnalyzer:
         plt.ylabel('C-index (Survival)')
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
-        plt.savefig('generated/figs/llm_drift_vs_cindex.png', dpi=300)
+        plt.savefig('results/figures/llm_drift_vs_cindex.png', dpi=300)
         plt.close()
         # 5. Scatter plot: AIC vs C-index
         plt.figure(figsize=(8,6))
@@ -308,7 +308,7 @@ class LLMRobustnessAnalyzer:
         plt.ylabel('C-index (Survival)')
         plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.tight_layout()
-        plt.savefig('generated/figs/llm_aic_vs_cindex.png', dpi=300)
+        plt.savefig('results/figures/llm_aic_vs_cindex.png', dpi=300)
         plt.close()
     def generate_report(self):
         # ... existing code ...
@@ -317,8 +317,8 @@ class LLMRobustnessAnalyzer:
 def main():
     print("🚀 BASELINE MODELING: LLM ROBUSTNESS ANALYSIS")
     print("="*60)
-    os.makedirs('./generated/outputs', exist_ok=True)
-    os.makedirs('./generated/figs', exist_ok=True)
+    os.makedirs('results/outputs', exist_ok=True)
+    os.makedirs('results/figures', exist_ok=True)
     cleaned_data, subject_clusters = process_subject_clustering()
     if cleaned_data is None:
         print("❌ Subject clustering failed!")
@@ -332,13 +332,13 @@ def main():
     count_summary, survival_summary = analyzer.analyze_all_models()
     analyzer.generate_report()
     analyzer.create_beautiful_visualizations()
-    count_summary.to_csv('./generated/outputs/model_analysis_results.csv', index=False)
-    survival_summary.to_csv('./generated/outputs/survival_analysis_results.csv', index=False)
+    count_summary.to_csv('results/outputs/model_analysis_results.csv', index=False)
+    survival_summary.to_csv('results/outputs/survival_analysis_results.csv', index=False)
     print(f"\n✅ BASELINE ANALYSIS COMPLETE!")
     print(f"📁 Results saved:")
-    print(f"   • generated/outputs/model_analysis_results.csv")
-    print(f"   • generated/outputs/survival_analysis_results.csv")
-    print(f"   • generated/figs/llm_robustness_analysis.png")
+    print(f"   • results/outputs/model_analysis_results.csv")
+    print(f"   • results/outputs/survival_analysis_results.csv")
+    print(f"   • results/figures/llm_robustness_analysis.png")
     return analyzer
 if __name__ == '__main__':
     analyzer = main() 
