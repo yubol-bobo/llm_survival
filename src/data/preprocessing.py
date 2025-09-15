@@ -25,10 +25,10 @@ def cosine_dist(a, b):
     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
 # Only process the three new models
-print("🚀 Processing new models: qwen_3, gpt_oss, gemini_25")
+print("🚀 Processing new models: gpt_5")
 print("=" * 60)
 
-for model in ['qwen_3', 'gpt_oss', 'gemini_25']:
+for model in ['qwen_3', 'gpt_5']:
     print(f"\n📊 Processing model: {model}")
     model_path = os.path.join(RAW_DATA_DIR, model)
     if not os.path.isdir(model_path):

@@ -1,0 +1,12 @@
+Model,Total_Coefficients,Significant_Coefficients,Significance_Rate,Increased_Risk_Count,Decreased_Risk_Count,No_Change_Count,Large_Effects,Moderate_Effects,Small_Effects,Model_C_Index,Model_AIC,N_Events,N_Observations
+claude_35,42,0,0.0,20,22,0,20,2,10,0.482,5761.9918,453,4744
+deepseek_r1,42,0,0.0,20,22,0,22,1,5,0.552,4335.0193,344,4184
+gemini_25,42,0,0.0,23,19,0,14,7,10,0.7136,741.5556,52,4808
+gpt_default,42,0,0.0,22,20,0,21,5,13,0.5755,1741.5037,134,4376
+gpt_oss,42,0,0.0,16,26,0,20,4,8,0.4116,1594.4172,122,4328
+llama_33,42,0,0.0,23,19,0,22,1,11,0.4158,4610.0398,377,3656
+llama_4_maverick,42,0,0.0,22,20,0,21,2,9,0.698,2162.6852,174,3448
+llama_4_scout,42,0,0.0,20,22,0,22,1,8,0.4318,4773.4881,385,3872
+mistral_large,42,0,0.0,20,22,0,18,3,14,0.3962,3327.61,269,3640
+qwen_3,42,0,0.0,15,27,0,23,1,8,0.4897,2644.757,205,4512
+qwen_max,42,0,0.0,20,22,0,20,1,9,0.5304,3163.5612,252,4072

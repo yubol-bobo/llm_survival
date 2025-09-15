@@ -1,0 +1,1127 @@
+{
+  "claude_35": {
+    "model_name": "claude_35",
+    "data_summary": {
+      "n_total": 4744,
+      "n_clean": 2372,
+      "n_events": 381.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7596476510067114,
+      "aic": 5233.97785734122,
+      "n_observations": 2372,
+      "n_events": 381.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 32.4588260709062,
+        "context_to_prompt_drift": -0.1832782385829292,
+        "cumulative_drift": -20.00100567089839,
+        "prompt_complexity": 0.0008116181860582526
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 6.60700102502664e-14,
+        "context_to_prompt_drift": 0.8784848252812425,
+        "cumulative_drift": 4.6055595984038004e-23,
+        "prompt_complexity": 0.41966479661772704
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 124936418385391.03,
+        "context_to_prompt_drift": 0.8325364797376257,
+        "cumulative_drift": 2.059081822172591e-09,
+        "prompt_complexity": 1.0008119476372217
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7570366404225026,
+      "aic": 3833.43147205137,
+      "frailty_variance": 0.0007264783760394732,
+      "n_observations": 2372,
+      "n_events": 381.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 33.779038455034964,
+        "context_to_prompt_drift": 0.027975105680878038,
+        "cumulative_drift": -20.92078424164672,
+        "prompt_complexity": 0.0010093032158562953
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.3750909808591923e-14,
+        "context_to_prompt_drift": 0.981632185719835,
+        "cumulative_drift": 1.2211329892427272e-23,
+        "prompt_complexity": 0.33273651475483323
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 467788999791910.3,
+        "context_to_prompt_drift": 1.0283700835297331,
+        "cumulative_drift": 8.207650345542276e-10,
+        "prompt_complexity": 1.001009812733752
+      },
+      "subject_effects": {
+        "STEM": 0.1766936715454993,
+        "Medical_Health": 0.13280265884660664,
+        "Business_Economics": 0.12171059719569835,
+        "Humanities": 0.17618017596910068,
+        "Social_Sciences": 0.14717735809211352,
+        "Law_Legal": 0.16570902484738742,
+        "General_Knowledge": 0.1004075012189278
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7595430739273484,
+      "aic": 4176.464919294935,
+      "frailty_variance": 0.0005656954619182766,
+      "n_observations": 2372,
+      "n_events": 381.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 32.12685911051203,
+        "context_to_prompt_drift": -0.12471499238867643,
+        "cumulative_drift": -19.980486597101596,
+        "prompt_complexity": 0.0008733428994440319
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.4909376494394283e-13,
+        "context_to_prompt_drift": 0.9172102805592136,
+        "cumulative_drift": 6.987412073786233e-23,
+        "prompt_complexity": 0.38661487376797665
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 89643258083341.89,
+        "context_to_prompt_drift": 0.8827484567645266,
+        "cumulative_drift": 2.1017687241780723e-09,
+        "prompt_complexity": 1.0008737243743988
+      },
+      "difficulty_effects": {
+        "professional": 0.16716022580905454,
+        "college": 0.17695035685213326,
+        "high_school": 0.13468209961359062,
+        "elementary": 0.11822626299961969
+      }
+    }
+  },
+  "deepseek_r1": {
+    "model_name": "deepseek_r1",
+    "data_summary": {
+      "n_total": 4184,
+      "n_clean": 1569,
+      "n_events": 156.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.8005014616335633,
+      "aic": 2052.540217739346,
+      "n_observations": 1569,
+      "n_events": 156.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 54.252042819665164,
+        "context_to_prompt_drift": 4.676993691759785,
+        "cumulative_drift": -48.39486423377936,
+        "prompt_complexity": 0.002159810804959538
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 8.397031962354836e-11,
+        "context_to_prompt_drift": 0.024178699019805166,
+        "cumulative_drift": 1.9478487195185994e-17,
+        "prompt_complexity": 0.10124997377814483
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 3.6421919366244066e+23,
+        "context_to_prompt_drift": 107.44656903350543,
+        "cumulative_drift": 9.602349538182483e-22,
+        "prompt_complexity": 1.002162144876398
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.8158175375829921,
+      "aic": 1458.409744567702,
+      "frailty_variance": 0.003392627107949691,
+      "n_observations": 1569,
+      "n_events": 156.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 58.6035880454814,
+        "context_to_prompt_drift": 4.588786254551582,
+        "cumulative_drift": -51.94664122752944,
+        "prompt_complexity": 0.003970072326160225
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 2.6924675884598747e-11,
+        "context_to_prompt_drift": 0.02393712508814678,
+        "cumulative_drift": 2.0766856528046022e-18,
+        "prompt_complexity": 0.009000986315870003
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.8262781948677753e+25,
+        "context_to_prompt_drift": 98.37495551621379,
+        "cumulative_drift": 2.7533432796821534e-23,
+        "prompt_complexity": 1.003977963502689
+      },
+      "subject_effects": {
+        "STEM": 0.11315973154938297,
+        "Medical_Health": 0.08084623970075727,
+        "Business_Economics": 0.07786387574706893,
+        "Humanities": 0.17039475865509243,
+        "Social_Sciences": 0.12629117557153585,
+        "Law_Legal": 0.04582495619850211,
+        "General_Knowledge": 0.2309778578602064
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.8014268176869803,
+      "aic": 1619.5387648345702,
+      "frailty_variance": 0.0003559480015035178,
+      "n_observations": 1569,
+      "n_events": 156.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 54.75175186123591,
+        "context_to_prompt_drift": 4.4117068856214,
+        "cumulative_drift": -48.695863064900244,
+        "prompt_complexity": 0.002037750682074839
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 6.339526482526904e-11,
+        "context_to_prompt_drift": 0.03444483657035478,
+        "cumulative_drift": 2.1559094135753657e-17,
+        "prompt_complexity": 0.1223108692744906
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 6.00321237850998e+23,
+        "context_to_prompt_drift": 82.41000798108813,
+        "cumulative_drift": 7.106493765980753e-22,
+        "prompt_complexity": 1.0020398283069836
+      },
+      "difficulty_effects": {
+        "college": 0.06755484778838976,
+        "professional": 0.10974530117763832,
+        "high_school": 0.09203481709866652,
+        "elementary": 0.1162644736828744
+      }
+    }
+  },
+  "gemini_25": {
+    "model_name": "gemini_25",
+    "data_summary": {
+      "n_total": 4808,
+      "n_clean": 1803,
+      "n_events": 19.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.8108072400581319,
+      "aic": 253.3584181676178,
+      "n_observations": 1803,
+      "n_events": 19.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 70.59019105033553,
+        "context_to_prompt_drift": 2.110257912184722,
+        "cumulative_drift": -49.49466828946111,
+        "prompt_complexity": -0.013309772350689598
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.000776087700687472,
+        "context_to_prompt_drift": 0.5431714622019002,
+        "cumulative_drift": 0.0010724015865338507,
+        "prompt_complexity": 0.1566589522865365
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 4.538689257261115e+30,
+        "context_to_prompt_drift": 8.250368880911202,
+        "cumulative_drift": 3.1969708637303884e-22,
+        "prompt_complexity": 0.9867784110023226
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7897810218978102,
+      "aic": 185.91965840796945,
+      "frailty_variance": 2.9077940250442222e-05,
+      "n_observations": 1803,
+      "n_events": 19.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 69.86789586815573,
+        "context_to_prompt_drift": 1.9218687775620218,
+        "cumulative_drift": -49.900770262877735,
+        "prompt_complexity": -0.012613703725920968
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.001882529184957416,
+        "context_to_prompt_drift": 0.5764103405333236,
+        "cumulative_drift": 0.0014612880430399375,
+        "prompt_complexity": 0.17803487123826425
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.2041524935195177e+30,
+        "context_to_prompt_drift": 6.83371724136998,
+        "cumulative_drift": 2.129956981399383e-22,
+        "prompt_complexity": 0.9874655156020546
+      },
+      "subject_effects": {
+        "STEM": 0.019306278213379106,
+        "Medical_Health": 0.011367851522275782,
+        "General_Knowledge": 0.02447964477611776
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.8095834078312176,
+      "aic": 199.35169329475076,
+      "frailty_variance": 0.00013698544103492034,
+      "n_observations": 1803,
+      "n_events": 19.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 72.40509206670373,
+        "context_to_prompt_drift": 1.9484927830783803,
+        "cumulative_drift": -51.22729018600732,
+        "prompt_complexity": -0.013710408528538873
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.0008063973491838558,
+        "context_to_prompt_drift": 0.5708152679570653,
+        "cumulative_drift": 0.0009129082275260109,
+        "prompt_complexity": 0.1426468732569284
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.7869677696141243e+31,
+        "context_to_prompt_drift": 7.018101803266384,
+        "cumulative_drift": 5.65289019246053e-23,
+        "prompt_complexity": 0.9863831510543587
+      },
+      "difficulty_effects": {
+        "professional": 0.0069660904616844245,
+        "elementary": 0.03070633126236108,
+        "college": 0.004917331248291014
+      }
+    }
+  },
+  "gpt_default": {
+    "model_name": "gpt_default",
+    "data_summary": {
+      "n_total": 4376,
+      "n_clean": 1641,
+      "n_events": 75.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7539822800320467,
+      "aic": 1007.6832196254026,
+      "n_observations": 1641,
+      "n_events": 75.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 48.158173978316874,
+        "context_to_prompt_drift": 0.19898060973138548,
+        "cumulative_drift": -36.88967380432001,
+        "prompt_complexity": 0.0023688132786655863
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.451052950872135e-06,
+        "context_to_prompt_drift": 0.9370427981948896,
+        "cumulative_drift": 1.2423104587056358e-07,
+        "prompt_complexity": 0.12468837714783614
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 8.219193734548099e+20,
+        "context_to_prompt_drift": 1.2201583064731771,
+        "cumulative_drift": 9.52836154230073e-17,
+        "prompt_complexity": 1.002371621133497
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7467712542587751,
+      "aic": 703.6951341482778,
+      "frailty_variance": 0.0010925611389218748,
+      "n_observations": 1641,
+      "n_events": 75.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 53.50632009023281,
+        "context_to_prompt_drift": -0.7615260758100424,
+        "cumulative_drift": -40.73408565679738,
+        "prompt_complexity": 0.004159482946467868
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 9.098038290999624e-07,
+        "context_to_prompt_drift": 0.775872889952494,
+        "cumulative_drift": 4.541350592590469e-08,
+        "prompt_complexity": 0.03293809647369823
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 1.727824238486382e+23,
+        "context_to_prompt_drift": 0.4669532768874609,
+        "cumulative_drift": 2.038972525685966e-18,
+        "prompt_complexity": 1.0041681456022173
+      },
+      "subject_effects": {
+        "STEM": 0.030462387310503786,
+        "Medical_Health": 0.013025444097616875,
+        "Business_Economics": 0.06316824846542769,
+        "Humanities": 0.01910558398236636,
+        "Social_Sciences": 0.1115454883612897,
+        "Law_Legal": 0.06848112130301166,
+        "General_Knowledge": 0.023481795005631495
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7492585094863707,
+      "aic": 800.4513675788154,
+      "frailty_variance": 6.126852223088157e-05,
+      "n_observations": 1641,
+      "n_events": 75.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 48.08565288904814,
+        "context_to_prompt_drift": 0.2219015736475524,
+        "cumulative_drift": -36.92186839170099,
+        "prompt_complexity": 0.0023559207277819624
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.6430054281194153e-06,
+        "context_to_prompt_drift": 0.9296716127267497,
+        "cumulative_drift": 1.2964271946140987e-07,
+        "prompt_complexity": 0.12485828660163911
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 7.644229344761128e+20,
+        "context_to_prompt_drift": 1.2484484915855132,
+        "cumulative_drift": 9.226485337842729e-17,
+        "prompt_complexity": 1.002358698089673
+      },
+      "difficulty_effects": {
+        "professional": 0.030744442607616367,
+        "elementary": 0.047109118958611446,
+        "college": 0.02670092389026474,
+        "high_school": 0.03877153852678234
+      }
+    }
+  },
+  "gpt_oss": {
+    "model_name": "gpt_oss",
+    "data_summary": {
+      "n_total": 4328,
+      "n_clean": 1623,
+      "n_events": 80.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7667454873223609,
+      "aic": 1071.5455185390633,
+      "n_observations": 1623,
+      "n_events": 80.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 31.705329999316845,
+        "context_to_prompt_drift": -0.8716076359120567,
+        "cumulative_drift": -29.396665173887666,
+        "prompt_complexity": 0.0026332345380230683
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.0018822631910227026,
+        "context_to_prompt_drift": 0.6409369985124049,
+        "cumulative_drift": 3.362532396387895e-06,
+        "prompt_complexity": 0.08318227242730637
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 58809822095104.48,
+        "context_to_prompt_drift": 0.41827856879037506,
+        "cumulative_drift": 1.7107656777003985e-13,
+        "prompt_complexity": 1.0026367045452016
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7761569416498993,
+      "aic": 764.715450311972,
+      "frailty_variance": 0.00023193558707567058,
+      "n_observations": 1623,
+      "n_events": 80.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 33.80623535034062,
+        "context_to_prompt_drift": -0.7906440827724079,
+        "cumulative_drift": -29.908064775212857,
+        "prompt_complexity": 0.004882637058701711
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.0016478876664217435,
+        "context_to_prompt_drift": 0.6822754073073007,
+        "cumulative_drift": 3.759746588433837e-06,
+        "prompt_complexity": 0.013326256178968751
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 480685992371590.0,
+        "context_to_prompt_drift": 0.45355257578524144,
+        "cumulative_drift": 1.0258704110067113e-13,
+        "prompt_complexity": 1.004894576555192
+      },
+      "subject_effects": {
+        "STEM": 0.04650150826258808,
+        "Medical_Health": 0.03698722846042877,
+        "Business_Economics": 0.035061156245241705,
+        "Humanities": 0.024311283456734677,
+        "Social_Sciences": 0.057105267149292475,
+        "Law_Legal": 0.031806442430858665,
+        "General_Knowledge": 0.005280607541242339
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7671775772334432,
+      "aic": 846.590763403753,
+      "frailty_variance": 0.00018594759723583972,
+      "n_observations": 1623,
+      "n_events": 80.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 31.288279072429514,
+        "context_to_prompt_drift": -0.746774488821756,
+        "cumulative_drift": -29.319138935139165,
+        "prompt_complexity": 0.002562957142826859
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.0022705162514195126,
+        "context_to_prompt_drift": 0.6919224507566463,
+        "cumulative_drift": 3.6882695729760116e-06,
+        "prompt_complexity": 0.09514370776340589
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 38754929340688.53,
+        "context_to_prompt_drift": 0.4738926362136551,
+        "cumulative_drift": 1.84867150141319e-13,
+        "prompt_complexity": 1.0025662443251875
+      },
+      "difficulty_effects": {
+        "college": 0.061216325785972546,
+        "professional": 0.04361603007154632,
+        "elementary": 0.022714842772614707,
+        "high_school": 0.04148791255909745
+      }
+    }
+  },
+  "llama_33": {
+    "model_name": "llama_33",
+    "data_summary": {
+      "n_total": 3656,
+      "n_clean": 1371,
+      "n_events": 188.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7968252108716026,
+      "aic": 2419.6883233895783,
+      "n_observations": 1371,
+      "n_events": 188.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 59.984198379014224,
+        "context_to_prompt_drift": -2.842682690475285,
+        "cumulative_drift": -45.271227938587614,
+        "prompt_complexity": -0.0009631248271600303
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 6.29108358668026e-16,
+        "context_to_prompt_drift": 0.16411865692787553,
+        "cumulative_drift": 1.168835670980217e-19,
+        "prompt_complexity": 0.4113530291813995
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 1.1241036484786551e+26,
+        "context_to_prompt_drift": 0.058269138038768785,
+        "cumulative_drift": 2.1825063566751217e-20,
+        "prompt_complexity": 0.9990373388286915
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7887276409044887,
+      "aic": 1709.3060726579833,
+      "frailty_variance": 0.003967857498593705,
+      "n_observations": 1371,
+      "n_events": 188.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 58.672384494864765,
+        "context_to_prompt_drift": -3.0527868488009253,
+        "cumulative_drift": -45.942333933333565,
+        "prompt_complexity": -0.00017357836717995606
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 6.46093765590325e-14,
+        "context_to_prompt_drift": 0.15196925786285206,
+        "cumulative_drift": 3.9136793914009223e-19,
+        "prompt_complexity": 0.9004053223220668
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 3.0275604705825773e+25,
+        "context_to_prompt_drift": 0.0472271259659313,
+        "cumulative_drift": 1.1155727236637328e-20,
+        "prompt_complexity": 0.9998264366966733
+      },
+      "subject_effects": {
+        "STEM": 0.1035618405147742,
+        "Medical_Health": 0.11467624928406872,
+        "Business_Economics": 0.16056803142661688,
+        "Humanities": 0.13286454146937887,
+        "Social_Sciences": 0.3045776335411534,
+        "Law_Legal": 0.18597154886177128,
+        "General_Knowledge": 0.14243658535336126
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7972668885659369,
+      "aic": 1897.5114112886047,
+      "frailty_variance": 0.0010576736719351348,
+      "n_observations": 1371,
+      "n_events": 188.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 60.59049722415452,
+        "context_to_prompt_drift": -2.807672801826152,
+        "cumulative_drift": -45.65682048698027,
+        "prompt_complexity": -0.000917683244283232
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 5.245657086879903e-16,
+        "context_to_prompt_drift": 0.1677158986412698,
+        "cumulative_drift": 8.423512666574179e-20,
+        "prompt_complexity": 0.43933242742565093
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.061192721580496e+26,
+        "context_to_prompt_drift": 0.06034526449791181,
+        "cumulative_drift": 1.4842081131740132e-20,
+        "prompt_complexity": 0.9990827376982114
+      },
+      "difficulty_effects": {
+        "college": 0.18370970451834734,
+        "elementary": 0.14243269439023643,
+        "high_school": 0.09360937424717268,
+        "professional": 0.154621851004564
+      }
+    }
+  },
+  "llama_4_maverick": {
+    "model_name": "llama_4_maverick",
+    "data_summary": {
+      "n_total": 3448,
+      "n_clean": 1293,
+      "n_events": 87.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7779701446598953,
+      "aic": 1122.1443107358891,
+      "n_observations": 1293,
+      "n_events": 87.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 53.35082116429724,
+        "context_to_prompt_drift": 4.951499461838699,
+        "cumulative_drift": -41.92149544781597,
+        "prompt_complexity": 0.0016102260746782668
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 9.218121718038865e-08,
+        "context_to_prompt_drift": 0.020098169613714655,
+        "cumulative_drift": 5.615660218076904e-10,
+        "prompt_complexity": 0.345873317715771
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 1.478996807885914e+23,
+        "context_to_prompt_drift": 141.38680917970453,
+        "cumulative_drift": 6.219075853289319e-19,
+        "prompt_complexity": 1.0016115231848042
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7734094271824139,
+      "aic": 805.1096374019113,
+      "frailty_variance": 0.004652885235296488,
+      "n_observations": 1293,
+      "n_events": 87.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 56.553364325135576,
+        "context_to_prompt_drift": 4.445188607817437,
+        "cumulative_drift": -44.056459177173195,
+        "prompt_complexity": 0.003239429116607726
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.220268709711832e-07,
+        "context_to_prompt_drift": 0.04257882331589287,
+        "cumulative_drift": 3.714415996691414e-10,
+        "prompt_complexity": 0.10650590368170053
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 3.637592614769425e+24,
+        "context_to_prompt_drift": 85.2159487158264,
+        "cumulative_drift": 7.353987496950433e-20,
+        "prompt_complexity": 1.0032446817374079
+      },
+      "subject_effects": {
+        "STEM": 0.037872153344047546,
+        "Medical_Health": 0.04331578285365608,
+        "Business_Economics": 0.024513645934588987,
+        "Humanities": 0.06313601211462036,
+        "Social_Sciences": 0.1866835946613297,
+        "Law_Legal": 0.0008665136342393493,
+        "General_Knowledge": 0.17262945315761677
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7789964635333915,
+      "aic": 881.1925195080332,
+      "frailty_variance": 0.0006552321108562355,
+      "n_observations": 1293,
+      "n_events": 87.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 52.5448288870751,
+        "context_to_prompt_drift": 5.21980897959842,
+        "cumulative_drift": -41.52808009606636,
+        "prompt_complexity": 0.0017799034559162724
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.2401512494950344e-07,
+        "context_to_prompt_drift": 0.014221617076084337,
+        "cumulative_drift": 6.875063314859755e-10,
+        "prompt_complexity": 0.2987892744503581
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 6.605858066577675e+22,
+        "context_to_prompt_drift": 184.89886124237415,
+        "cumulative_drift": 9.216880786332332e-19,
+        "prompt_complexity": 1.0017814884242966
+      },
+      "difficulty_effects": {
+        "elementary": 0.09291325576975669,
+        "high_school": 0.09179006322190615,
+        "college": 0.031755239433673275,
+        "professional": 0.05699383291449792
+      }
+    }
+  },
+  "llama_4_scout": {
+    "model_name": "llama_4_scout",
+    "data_summary": {
+      "n_total": 3872,
+      "n_clean": 1452,
+      "n_events": 215.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7694851254357422,
+      "aic": 2780.0784275451188,
+      "n_observations": 1452,
+      "n_events": 215.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 47.10979376682332,
+        "context_to_prompt_drift": 1.2128787414853044,
+        "cumulative_drift": -36.050518133832206,
+        "prompt_complexity": 0.00029146074560872554
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 2.170672905394515e-12,
+        "context_to_prompt_drift": 0.4900858277994672,
+        "cumulative_drift": 9.8970185836979e-19,
+        "prompt_complexity": 0.793593915884401
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.8808687758586885e+20,
+        "context_to_prompt_drift": 3.36315237670145,
+        "cumulative_drift": 2.2052554534042791e-16,
+        "prompt_complexity": 1.0002915032244186
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7653078455874903,
+      "aic": 1952.622811189101,
+      "frailty_variance": 0.0050655231397656545,
+      "n_observations": 1452,
+      "n_events": 215.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 47.386492396112665,
+        "context_to_prompt_drift": 1.2432993995291919,
+        "cumulative_drift": -37.64050500566397,
+        "prompt_complexity": 0.00107878605523618
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 2.6796250140609034e-11,
+        "context_to_prompt_drift": 0.48307580914067594,
+        "cumulative_drift": 6.139212948148086e-19,
+        "prompt_complexity": 0.39871877746586304
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 3.799200068305727e+20,
+        "context_to_prompt_drift": 3.4670337438730123,
+        "cumulative_drift": 4.497139712475977e-17,
+        "prompt_complexity": 1.0010793681542138
+      },
+      "subject_effects": {
+        "STEM": 0.2492331729133813,
+        "Medical_Health": 0.13309269245203217,
+        "Business_Economics": 0.17413041663039341,
+        "Humanities": 0.10196390052974595,
+        "Social_Sciences": 0.3086804098947418,
+        "Law_Legal": 0.21218247801806697,
+        "General_Knowledge": 0.2828864415792624
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7687750772010168,
+      "aic": 2185.6897842229655,
+      "frailty_variance": 0.0011511147750094288,
+      "n_observations": 1452,
+      "n_events": 215.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 47.17453611921355,
+        "context_to_prompt_drift": 1.4900555363619326,
+        "cumulative_drift": -36.31435734145045,
+        "prompt_complexity": 0.00034043889447453983
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 4.170399188479142e-12,
+        "context_to_prompt_drift": 0.39876479831265943,
+        "cumulative_drift": 9.16219868754441e-19,
+        "prompt_complexity": 0.7610088638383025
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 3.07355311658673e+20,
+        "context_to_prompt_drift": 4.437341945989103,
+        "cumulative_drift": 1.6938501727063525e-16,
+        "prompt_complexity": 1.0003404968503715
+      },
+      "difficulty_effects": {
+        "college": 0.1770159638509602,
+        "professional": 0.24144283578366185,
+        "high_school": 0.15729558486721198,
+        "elementary": 0.1606991717535022
+      }
+    }
+  },
+  "mistral_large": {
+    "model_name": "mistral_large",
+    "data_summary": {
+      "n_total": 3640,
+      "n_clean": 1365,
+      "n_events": 150.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7942530931007407,
+      "aic": 1928.3128775391335,
+      "n_observations": 1365,
+      "n_events": 150.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 63.14520897617091,
+        "context_to_prompt_drift": -1.9181223648382262,
+        "cumulative_drift": -51.88963815472545,
+        "prompt_complexity": -0.0007743277082257894
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.1557722827525755e-14,
+        "context_to_prompt_drift": 0.35391894480100816,
+        "cumulative_drift": 2.467129147595701e-18,
+        "prompt_complexity": 0.5533157086375675
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.652258298835431e+27,
+        "context_to_prompt_drift": 0.1468824951116643,
+        "cumulative_drift": 2.91485181780344e-23,
+        "prompt_complexity": 0.9992259720061101
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7983368869936034,
+      "aic": 1374.3396862149707,
+      "frailty_variance": 0.0017648203614457213,
+      "n_observations": 1365,
+      "n_events": 150.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 65.2550705024823,
+        "context_to_prompt_drift": -1.3046138825276168,
+        "cumulative_drift": -53.04310855048226,
+        "prompt_complexity": -3.070186733082208e-05
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 6.013936565254037e-15,
+        "context_to_prompt_drift": 0.5364664267336396,
+        "cumulative_drift": 3.578405870844295e-18,
+        "prompt_complexity": 0.9828049607780115
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.1873437292682604e+28,
+        "context_to_prompt_drift": 0.2712772597161229,
+        "cumulative_drift": 9.197518150162478e-24,
+        "prompt_complexity": 0.9999692986039667
+      },
+      "subject_effects": {
+        "STEM": 0.1407519070403462,
+        "Medical_Health": 0.06716989631089772,
+        "Business_Economics": 0.11666462083609525,
+        "Humanities": 0.04789244195280427,
+        "Social_Sciences": 0.0794664170663399,
+        "Law_Legal": 0.0010255276617853837,
+        "General_Knowledge": 0.07848415269722786
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7937478666514962,
+      "aic": 1510.7780201959665,
+      "frailty_variance": 0.0005887730583067024,
+      "n_observations": 1365,
+      "n_events": 150.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 63.010896450989826,
+        "context_to_prompt_drift": -1.996489187895203,
+        "cumulative_drift": -51.636635698406415,
+        "prompt_complexity": -0.0007516659626625358
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 1.9779973608689325e-14,
+        "context_to_prompt_drift": 0.3357727411522444,
+        "cumulative_drift": 3.688598093936726e-18,
+        "prompt_complexity": 0.564535182641579
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 2.3189139246707087e+27,
+        "context_to_prompt_drift": 0.1358112550220645,
+        "cumulative_drift": 3.7539981316058274e-23,
+        "prompt_complexity": 0.9992486164674284
+      },
+      "difficulty_effects": {
+        "college": 0.1233577889658541,
+        "professional": 0.06944959774869693,
+        "elementary": 0.07910646979684009,
+        "high_school": 0.0600311323536488
+      }
+    }
+  },
+  "qwen_3": {
+    "model_name": "qwen_3",
+    "data_summary": {
+      "n_total": 4512,
+      "n_clean": 1692,
+      "n_events": 42.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7736994346320726,
+      "aic": 559.437414371091,
+      "n_observations": 1692,
+      "n_events": 42.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 40.96107251573509,
+        "context_to_prompt_drift": -2.053434976160429,
+        "cumulative_drift": -41.61098246372054,
+        "prompt_complexity": -0.002489153157587907
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.012568900097708155,
+        "context_to_prompt_drift": 0.395844382437894,
+        "cumulative_drift": 7.097038469550266e-05,
+        "prompt_complexity": 0.4005468590075355
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 6.154145592663199e+17,
+        "context_to_prompt_drift": 0.12829346086962226,
+        "cumulative_drift": 8.483595038344869e-19,
+        "prompt_complexity": 0.9975139422153146
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7510887004354801,
+      "aic": 415.8501823495672,
+      "frailty_variance": 0.00023103446752034822,
+      "n_observations": 1692,
+      "n_events": 42.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 45.35741087896449,
+        "context_to_prompt_drift": -2.655675651466359,
+        "cumulative_drift": -40.923191384974345,
+        "prompt_complexity": -0.001653884561560656
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.006705160762269382,
+        "context_to_prompt_drift": 0.27966167886664456,
+        "cumulative_drift": 8.965866888730304e-05,
+        "prompt_complexity": 0.620961454318367
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 4.994284267669079e+19,
+        "context_to_prompt_drift": 0.07025135719407005,
+        "cumulative_drift": 1.6876555021115292e-18,
+        "prompt_complexity": 0.9983474823518347
+      },
+      "subject_effects": {
+        "STEM": 0.04734251096118005,
+        "Medical_Health": 0.009765586781988864,
+        "Business_Economics": 0.03446539690869465,
+        "Humanities": 0.019099187426395003,
+        "Social_Sciences": 0.007420936033339976
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7699177646122557,
+      "aic": 442.9307363957173,
+      "frailty_variance": 9.0307747873664e-05,
+      "n_observations": 1692,
+      "n_events": 42.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 42.04301456147346,
+        "context_to_prompt_drift": -2.3569691310559255,
+        "cumulative_drift": -41.52837117316546,
+        "prompt_complexity": -0.002446080772278577
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 0.011591761244083721,
+        "context_to_prompt_drift": 0.33144756645148116,
+        "cumulative_drift": 7.880518769449142e-05,
+        "prompt_complexity": 0.4167980709392872
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 1.8157214604046968e+18,
+        "context_to_prompt_drift": 0.09470683263690342,
+        "cumulative_drift": 9.214198353826578e-19,
+        "prompt_complexity": 0.9975569084455076
+      },
+      "difficulty_effects": {
+        "high_school": 0.008599017000088962,
+        "college": 0.024668031967733723,
+        "elementary": 0.034922228054210164,
+        "professional": 0.026220684059778843
+      }
+    }
+  },
+  "qwen_max": {
+    "model_name": "qwen_max",
+    "data_summary": {
+      "n_total": 4072,
+      "n_clean": 1527,
+      "n_events": 76.0,
+      "n_subjects": 7,
+      "n_difficulties": 4,
+      "n_conversations": 8
+    },
+    "baseline": {
+      "analysis_type": "individual_baseline",
+      "c_index": 0.7804090537223889,
+      "aic": 1010.0484249539403,
+      "n_observations": 1527,
+      "n_events": 76.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 52.69270160574787,
+        "context_to_prompt_drift": 3.0025772879772936,
+        "cumulative_drift": -55.23332459494417,
+        "prompt_complexity": 0.00021606425502905928
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 3.222012572331863e-05,
+        "context_to_prompt_drift": 0.26148395638401634,
+        "cumulative_drift": 8.924076555097026e-10,
+        "prompt_complexity": 0.9035482037033048
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 7.658602760576752e+22,
+        "context_to_prompt_drift": 20.137369901581973,
+        "cumulative_drift": 1.0291339640023132e-24,
+        "prompt_complexity": 1.0002160875985915
+      }
+    },
+    "subject_stratified": {
+      "analysis_type": "individual_subject_stratified",
+      "c_index": 0.7797258920854426,
+      "aic": 734.2999583551638,
+      "frailty_variance": 0.0003100590921307521,
+      "n_observations": 1527,
+      "n_events": 76.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 54.954673958803795,
+        "context_to_prompt_drift": 4.407335733458944,
+        "cumulative_drift": -57.27918025463471,
+        "prompt_complexity": 0.000430524412737965
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 2.1048165517805017e-05,
+        "context_to_prompt_drift": 0.1060733508960021,
+        "cumulative_drift": 5.574428607487387e-10,
+        "prompt_complexity": 0.8243903911042936
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 7.353797304944927e+23,
+        "context_to_prompt_drift": 82.05056745343158,
+        "cumulative_drift": 1.330356658029946e-25,
+        "prompt_complexity": 1.0004306171016741
+      },
+      "subject_effects": {
+        "STEM": 0.023458627861031266,
+        "Medical_Health": 0.054153447635274084,
+        "Business_Economics": 0.010843661515280793,
+        "Humanities": 0.0005206481161427783,
+        "Social_Sciences": 0.038917134346886144,
+        "General_Knowledge": 0.021142152490402643
+      }
+    },
+    "difficulty_stratified": {
+      "analysis_type": "individual_difficulty_stratified",
+      "c_index": 0.7835627281122202,
+      "aic": 798.957847486882,
+      "frailty_variance": 0.00015719659250555947,
+      "n_observations": 1527,
+      "n_events": 76.0,
+      "coefficients": {
+        "prompt_to_prompt_drift": 52.72737094063722,
+        "context_to_prompt_drift": 3.1238562438267574,
+        "cumulative_drift": -55.29047241659217,
+        "prompt_complexity": 0.0003927648324111867
+      },
+      "p_values": {
+        "prompt_to_prompt_drift": 3.64524231081724e-05,
+        "context_to_prompt_drift": 0.2392234772715296,
+        "cumulative_drift": 1.1091815155304475e-09,
+        "prompt_complexity": 0.8284595761739486
+      },
+      "hazard_ratios": {
+        "prompt_to_prompt_drift": 7.928777757034403e+22,
+        "context_to_prompt_drift": 22.73387820433619,
+        "cumulative_drift": 9.719701501309457e-25,
+        "prompt_complexity": 1.0003928419746173
+      },
+      "difficulty_effects": {
+        "professional": 0.012805691938905494,
+        "elementary": 0.023780500276663136,
+        "high_school": 0.017448658976224916,
+        "college": 0.04553343333839993
+      }
+    }
+  }
+}
