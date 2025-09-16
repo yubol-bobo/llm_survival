@@ -728,8 +728,8 @@ class AdvancedModelVisualizer:
             advanced.load_data()
             
             # Define subject clusters (7 actual clusters from data)
-            subject_clusters = ['Business_Economics', 'General_Knowledge', 'Humanities', 
-                              'Law_Legal', 'Medical_Health', 'STEM', 'Social_Sciences']
+            subject_clusters = ['Business_Economics', 'Medical_Health', 'STEM', 'Humanities',
+                              'Social_Sciences', 'Law_Legal', 'General_Knowledge']
             
             # Create 2x4 subplot
             fig, axes = plt.subplots(2, 4, figsize=(20, 10))
