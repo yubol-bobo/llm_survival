@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(call conda activate survival_analysis)",
+      "Bash(python test:*)",
+      "Bash(conda run:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
