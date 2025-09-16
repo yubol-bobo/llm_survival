@@ -2,7 +2,7 @@
 
 Survival analysis framework for evaluating Large Language Model robustness in multi-turn conversations. Analyzes 12 LLMs across 40,000+ interactions to discover "drift cliffs" and vulnerability patterns.
 
-## 🚀 How to Run
+## 🚀 Quick Start
 
 ```bash
 # Setup environment
@@ -15,11 +15,169 @@ python run_analysis.py
 # Results saved to:
 # - results/figures/baseline/    (13 baseline plots)
 # - results/figures/advanced/    (14 advanced plots)  
+# - results/figures/aft/         (8 AFT analysis plots)
 # - results/outputs/             (statistical results)
 ```
 
-## 📊 What It Does
+## 📚 Step-by-Step Tutorial
 
-- **Baseline Analysis**: Cox survival models + 13 visualizations 
-- **Advanced Analysis**: Drift×model interactions + 14 visualizations
-- **Output**: 28+ publication-ready plots + statistical results
+### Step 1: Environment Setup
+```bash
+# Create conda environment with all dependencies
+conda env create -f environment.yml
+
+# Activate the environment (ALWAYS use this for all commands)
+conda activate survival_analysis
+
+# Verify installation
+python -c "import pandas, numpy, matplotlib; print('✅ Environment ready!')"
+```
+
+### Step 2: Data Preprocessing (Optional)
+If you want to regenerate the processed data from raw conversations:
+
+```bash
+# Preprocess all models (generates drift metrics for all 8 rounds)
+python src/data/preprocessing.py
+
+# This creates:
+# - data/processed/{model}/{model}_long.csv    (round-level data)
+# - data/processed/{model}/{model}_static.csv  (conversation-level data)
+# - data/processed/{model}/{model}.csv         (merged raw data)
+# - data/processed/{model}/{model}.json        (conversation data)
+```
+
+**⚠️ Note**: Preprocessing takes ~2-3 hours for all 12 models and requires sentence-transformers embeddings.
+
+### Step 3: Run Analysis Pipeline
+
+#### Option A: Complete Analysis (Recommended)
+```bash
+# Runs all 3 modeling stages: baseline + advanced + AFT
+python run_analysis.py
+
+# Generates 28+ visualizations across 3 analysis types:
+# - Baseline: Cox proportional hazards models (13 plots)
+# - Advanced: Interaction effects and diagnostics (14 plots)
+# - AFT: Accelerated Failure Time models (8 plots)
+```
+
+#### Option B: Run Individual Stages
+```bash
+# Baseline analysis only (Cox models + 13 plots)
+python run_analysis.py --stage baseline
+
+# Advanced analysis only (interactions + 14 plots)
+python run_analysis.py --stage advanced
+
+# AFT analysis only (survival acceleration + 8 plots)
+python run_analysis.py --stage aft
+
+# Visualization only (regenerate plots from existing results)
+python run_analysis.py --stage visualization
+
+# Include visualizations with modeling
+python run_analysis.py --stage baseline --viz
+```
+
+### Step 4: View Results
+
+#### Statistical Results
+```bash
+# View results directory
+ls results/outputs/
+
+# Key files:
+# - baseline_model_comparison.csv      (Cox model performance)
+# - advanced_interaction_results.csv   (Interaction effects)
+# - aft/model_performance.csv          (AFT model comparison)
+# - aft/feature_importance.csv         (Risk factor rankings)
+```
+
+#### Visualizations
+```bash
+# View all generated plots
+ls results/figures/
+
+# Baseline plots (13 files):
+ls results/figures/baseline/
+# - hazard_ratios.png                  (Main risk factors)
+# - model_comparison.png               (Model performance)
+# - survival_curves.png                (Survival probabilities)
+# - drift_dynamics.png                 (Risk evolution)
+
+# Advanced plots (14 files):
+ls results/figures/advanced/
+# - interaction_effects.png            (Drift×model interactions)
+# - residual_analysis.png              (Model diagnostics)
+# - risk_stratification.png            (Risk group analysis)
+
+# AFT plots (8 files):
+ls results/figures/aft/
+# - driver_dynamics_evolution.png      (Risk factors across 8 rounds)
+# - aft_performance_comparison.png     (Model acceleration factors)
+# - aft_feature_importance.png         (Survival insights)
+```
+
+### Step 5: Interpret Key Results
+
+#### 🔍 Main Findings
+1. **Critical Risk Factor**: Prompt-to-prompt drift (β = -15.16, p < 0.001)
+   - Causes massive failure acceleration (AF ≈ 0.0000003)
+   - Most dangerous in rounds 2-4
+
+2. **Protective Factor**: Cumulative drift (β = +11.99, p < 0.001)  
+   - Dramatically delays failure (AF ≈ 162,000)
+   - Beneficial when managed properly
+
+3. **Model Rankings**: Log-Logistic AFT achieves best performance (C-index = 0.8301)
+
+#### 📊 Key Plots to Examine
+- `driver_dynamics_evolution.png` - Shows how risk factors evolve across 8 conversation rounds
+- `aft_feature_importance.png` - Identifies most critical survival factors
+- `hazard_ratios.png` - Shows relative risk impacts
+
+### Step 6: Troubleshooting
+
+#### Common Issues
+```bash
+# Issue: "conda activate not found"
+# Solution: Use conda run instead
+conda run -n survival_analysis python run_analysis.py
+
+# Issue: "NumPy compatibility error"  
+# Solution: Ensure you're using the correct environment
+conda activate survival_analysis
+python run_analysis.py
+
+# Issue: "No such file or directory: data/processed/"
+# Solution: Run preprocessing first
+python src/data/preprocessing.py
+```
+
+#### Performance Tips
+```bash
+# For faster testing, process subset of models:
+# Edit src/data/preprocessing.py line 35:
+# for model in ['claude_35', 'gpt_5']:  # instead of all models
+
+# Skip heavy visualizations for quick testing:
+python run_analysis.py --no-viz
+```
+
+## 📊 What Each Analysis Does
+
+### Baseline Analysis
+- **Cox Proportional Hazards Models**: Traditional survival analysis
+- **13 Visualizations**: Hazard ratios, survival curves, model comparison
+- **Key Insights**: Main risk factors and model performance
+
+### Advanced Analysis  
+- **Interaction Models**: Drift×model interaction effects
+- **14 Visualizations**: Residual analysis, interaction plots, diagnostics
+- **Key Insights**: Model-specific vulnerabilities and assumption testing
+
+### AFT Analysis
+- **Accelerated Failure Time Models**: Time acceleration/deceleration analysis
+- **8 Visualizations**: Driver dynamics, feature importance, model comparison
+- **Key Insights**: How factors speed up or slow down conversation failure

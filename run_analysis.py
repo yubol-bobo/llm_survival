@@ -9,17 +9,19 @@ Runs modeling stages in proper order with consistent data handling.
 Stages:
 1. Baseline modeling - Basic Cox PH survival analysis
 2. Advanced modeling - Interaction effects with drift×model terms
-3. Visualization generation - Publication-ready plots
+3. AFT modeling - Accelerated Failure Time models
+4. Visualization generation - Publication-ready plots
 
 Usage:
     python run_analysis.py [--stage STAGE] [--viz]
     
-    --stage: Run specific stage only (baseline, advanced, all)
+    --stage: Run specific stage only (baseline, advanced, aft, visualization, all)
     --viz: Generate visualizations after modeling
 
 Outputs:
     - results/outputs/baseline/*.csv
     - results/outputs/advanced/*.csv
+    - results/outputs/aft/*.csv
     - results/figures/*/*.png/.pdf (if --viz flag used)
 """
 
@@ -33,9 +35,11 @@ sys.path.append(str(Path(__file__).parent / 'src'))
 
 from modeling.baseline import BaselineModeling
 from modeling.advanced import AdvancedModeling
+from modeling.aft import AFTModeling
 from visualization.baseline import BaselineCombinedVisualizer
 from visualization.baseline_summary import create_baseline_summary
 from visualization.advanced import AdvancedModelVisualizer
+from visualization.aft import AFTVisualizer
 
 
 class LLMSurvivalPipeline:
@@ -44,6 +48,7 @@ class LLMSurvivalPipeline:
     def __init__(self):
         self.baseline_model = None
         self.advanced_model = None
+        self.aft_model = None
         
     def run_baseline_stage(self, generate_viz=True):
         """Run baseline modeling stage."""
@@ -90,7 +95,33 @@ class LLMSurvivalPipeline:
             print(f"❌ Advanced modeling failed: {e}")
             return None
     
-
+    def run_aft_stage(self, generate_viz=True):
+        """Run AFT modeling stage."""
+        print("\n🚀 STAGE 3: AFT MODELING")
+        print("=" * 40)
+        
+        try:
+            self.aft_model = AFTModeling()
+            aft_results = self.aft_model.run_complete_analysis()
+            
+            print("✅ AFT modeling completed successfully")
+            
+            # Generate visualizations if requested
+            if generate_viz:
+                print("\n🎨 GENERATING AFT VISUALIZATIONS")
+                print("=" * 40)
+                try:
+                    visualizer = AFTVisualizer()
+                    visualizer.create_all_visualizations()
+                    print("✅ AFT visualizations completed")
+                except Exception as e:
+                    print(f"⚠️  AFT visualization generation failed: {e}")
+            
+            return aft_results
+            
+        except Exception as e:
+            print(f"❌ AFT modeling failed: {e}")
+            return None
     
     def run_visualization_stage(self):
         """Run visualization generation stage."""
@@ -114,6 +145,14 @@ class LLMSurvivalPipeline:
             else:
                 print("⚠️  No advanced results found, skipping advanced visualizations")
             
+            # Generate AFT visualizations
+            if os.path.exists('results/outputs/aft'):
+                print("\n🎨 GENERATING AFT VISUALIZATIONS")
+                aft_viz = AFTVisualizer()
+                aft_viz.create_all_visualizations()
+            else:
+                print("⚠️  No AFT results found, skipping AFT visualizations")
+            
             print("✅ Visualization generation completed successfully")
             return True
             
@@ -134,6 +173,9 @@ class LLMSurvivalPipeline:
         # Stage 2: Advanced  
         results['advanced'] = self.run_advanced_stage()
         
+        # Stage 3: AFT
+        results['aft'] = self.run_aft_stage()
+        
         # Final summary
         print("\n" + "=" * 60)
         print("📊 PIPELINE SUMMARY")
@@ -144,7 +186,7 @@ class LLMSurvivalPipeline:
             print(f"{stage.upper():.<20} {status}")
         
         successful_stages = sum(1 for r in results.values() if r is not None)
-        print(f"\n🎯 Completed {successful_stages}/2 modeling stages successfully")
+        print(f"\n🎯 Completed {successful_stages}/3 modeling stages successfully")
         
         return results
     
@@ -153,6 +195,7 @@ class LLMSurvivalPipeline:
         stage_functions = {
             'baseline': self.run_baseline_stage,
             'advanced': self.run_advanced_stage,
+            'aft': self.run_aft_stage,
             'visualization': self.run_visualization_stage
         }
         
@@ -168,7 +211,7 @@ def main():
     """Main execution function with command line arguments."""
     parser = argparse.ArgumentParser(description='LLM Survival Analysis Pipeline')
     parser.add_argument('--stage', type=str, default='all', 
-                       choices=['baseline', 'advanced', 'visualization', 'all'],
+                       choices=['baseline', 'advanced', 'aft', 'visualization', 'all'],
                        help='Specific stage to run (default: all)')
     parser.add_argument('--viz', action='store_true', 
                        help='Generate visualizations after modeling')

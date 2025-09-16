@@ -837,15 +837,21 @@ class AFTVisualizer:
             print("❌ No drift features with coefficients found")
             return
             
-        # Don't drop all NaN rows - instead handle missing data intelligently
-        print(f"📈 Original data: {len(combined_df)} observations across {combined_df['round'].nunique()} rounds")
+        # Keep all data - we now have drift data for all 8 rounds!  
+        print(f"📈 Data loaded: {len(combined_df)} observations across {combined_df['round'].nunique()} rounds")
         
         # Check data availability by round
         for i, feature in enumerate(drift_features):
             non_null_by_round = combined_df.groupby('round')[feature].count()
-            print(f"   {feature}: data available for rounds {list(non_null_by_round[non_null_by_round > 0].index)}")
+            total_by_round = combined_df.groupby('round').size()
+            print(f"   {feature}: available for rounds {list(non_null_by_round[non_null_by_round > 0].index)}")
+            for round_num in sorted(combined_df['round'].unique()):
+                avail = non_null_by_round.get(round_num, 0)
+                total = total_by_round.get(round_num, 0)
+                pct = (avail/total*100) if total > 0 else 0
+                print(f"     Round {round_num}: {avail}/{total} ({pct:.1f}%)")
         
-        clean_df = combined_df.copy()  # Keep all data, handle NaN in visualization
+        clean_df = combined_df.copy()  # Keep all data
         
         # Create visualization
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -860,59 +866,29 @@ class AFTVisualizer:
         all_rounds = list(range(1, 9))
         
         for i, feature in enumerate(drift_features):
-            # Calculate mean feature value by round, including NaN handling
+            # Calculate mean feature value by round (now we have all 8 rounds!)
             round_means = clean_df.groupby('round')[feature].mean()
             
-            # Extend to all 8 rounds, filling missing values appropriately
-            full_round_data = []
-            full_round_indices = []
+            # Get data for all available rounds (should be 1-8)
+            available_rounds = [r for r in all_rounds if r in round_means.index and not pd.isna(round_means[r])]
+            available_means = [round_means[r] for r in available_rounds]
             
-            for round_num in all_rounds:
-                if round_num in round_means.index and not pd.isna(round_means[round_num]):
-                    # Use actual data
-                    full_round_data.append(round_means[round_num])
-                    full_round_indices.append(round_num)
-                elif round_num > 4:  # For rounds 5-8, conversations have likely ended
-                    # Use the last known value (round 4 or earlier) to show trend
-                    last_known_idx = max([r for r in round_means.index if r <= round_num and not pd.isna(round_means[r])], default=None)
-                    if last_known_idx:
-                        # Use last known value but mark as extrapolated
-                        full_round_data.append(round_means[last_known_idx])
-                        full_round_indices.append(round_num)
-            
-            if len(full_round_data) > 0:
+            if len(available_rounds) > 0:
                 # Calculate acceleration factor: exp(coeff * mean_value)
                 coeff = coeff_map[feature]
-                acceleration_factors = np.exp(coeff * np.array(full_round_data))
+                acceleration_factors = np.exp(coeff * np.array(available_means))
                 
-                # Plot with different styles for actual vs extrapolated data
-                actual_rounds = [r for r in full_round_indices if r <= 4]
-                actual_afs = [acceleration_factors[full_round_indices.index(r)] for r in actual_rounds]
+                # Plot all available data with solid line
+                ax1.plot(available_rounds, acceleration_factors, 
+                        marker='o', linewidth=2, color=colors[i % len(colors)], linestyle='-',
+                        label=f'{self._clean_feature_name(feature)} (β={coeff:.3f})')
                 
-                # Plot actual data with solid line
-                if len(actual_rounds) > 1:
-                    ax1.plot(actual_rounds, actual_afs, 
-                            marker='o', linewidth=2, color=colors[i % len(colors)], linestyle='-',
-                            label=f'{self._clean_feature_name(feature)} (β={coeff:.3f})')
-                
-                # Plot extrapolated data with dashed line if available
-                if len(full_round_indices) > len(actual_rounds):
-                    extrap_rounds = [r for r in full_round_indices if r > 4]
-                    extrap_afs = [acceleration_factors[full_round_indices.index(r)] for r in extrap_rounds]
-                    
-                    if len(extrap_rounds) > 0:
-                        # Connect last actual point to extrapolated points
-                        connect_rounds = [actual_rounds[-1]] + extrap_rounds if actual_rounds else extrap_rounds
-                        connect_afs = [actual_afs[-1]] + extrap_afs if actual_afs else extrap_afs
-                        
-                        ax1.plot(connect_rounds, connect_afs, 
-                                marker='s', linewidth=1, color=colors[i % len(colors)], 
-                                linestyle='--', alpha=0.6)
+                print(f"   Plotted {feature}: {len(available_rounds)} rounds ({min(available_rounds)}-{max(available_rounds)})")
         
         ax1.axhline(1.0, color='black', linestyle='--', alpha=0.7, label='Neutral (AF=1.0)')
         ax1.set_xlabel('Follow-up Round')
         ax1.set_ylabel('Acceleration Factor')
-        ax1.set_title('Individual Drift Feature Evolution\n(Solid=Actual Data, Dashed=Extrapolated)')
+        ax1.set_title('Individual Drift Feature Evolution')
         ax1.legend(fontsize=9)
         ax1.grid(True, alpha=0.3)
         ax1.set_yscale('log')  # Log scale for better visibility
@@ -958,11 +934,10 @@ class AFTVisualizer:
             ax2.plot(actual_risk_rounds, actual_risk_scores, 
                     marker='s', linewidth=3, color='purple', label='Combined Risk Score')
             
-            # Add note about data availability
-            if max(risk_rounds) <= 4:
-                ax2.text(0.95, 0.05, 'Data available\nonly for rounds 1-4', 
-                        transform=ax2.transAxes, ha='right', va='bottom',
-                        bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.7))
+            # Add note about data coverage
+            ax2.text(0.95, 0.05, f'Data coverage:\nRounds 1-{max(risk_rounds)}', 
+                    transform=ax2.transAxes, ha='right', va='bottom',
+                    bbox=dict(boxstyle='round', facecolor='lightgreen', alpha=0.7))
         ax2.set_xlabel('Follow-up Round')
         ax2.set_ylabel('Combined Risk Score')
         ax2.set_title('Overall Risk Evolution')
