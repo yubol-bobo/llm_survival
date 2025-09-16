@@ -16,6 +16,9 @@ warnings.filterwarnings('ignore')
 
 import sys
 import os
+import ast
+from pathlib import Path
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Set matplotlib style
@@ -29,7 +32,8 @@ class AFTVisualizer:
         self.results_dir = 'results/outputs/aft'
         self.figures_dir = 'results/figures/aft'
         self.data = {}
-        
+        self._round_level_data = None
+
         # Create figures directory if it doesn't exist
         os.makedirs(self.figures_dir, exist_ok=True)
         
@@ -691,6 +695,351 @@ class AFTVisualizer:
         except Exception as e:
             print(f"❌ Survival insights analysis failed: {e}")
     
+    def _load_round_level_data(self):
+        """Load combined long-format conversation data for round tracking."""
+        if self._round_level_data is not None:
+            return self._round_level_data
+
+        processed_dir = Path('data/processed')
+        if not processed_dir.exists():
+            print("�?O Processed data directory missing for driver dynamics")
+            return None
+
+        frames = []
+        for model_dir in processed_dir.iterdir():
+            if not model_dir.is_dir():
+                continue
+
+            long_path = model_dir / f"{model_dir.name}_long.csv"
+            if not long_path.exists():
+                continue
+
+            try:
+                df = pd.read_csv(long_path)
+            except Exception as exc:
+                print(f"�?O Failed to read {long_path}: {exc}")
+                continue
+
+            if 'round' not in df.columns:
+                continue
+
+            df = df[df['round'].between(1, 8)].copy()
+            if df.empty:
+                continue
+
+            if 'model' in df.columns:
+                model_dummies = pd.get_dummies(df['model'], prefix='model', drop_first=True)
+                df = pd.concat([df, model_dummies], axis=1)
+
+            if 'difficulty_level' not in df.columns and 'level' in df.columns:
+                df['difficulty_level'] = df['level']
+
+            if 'difficulty_level' in df.columns:
+                diff_dummies = pd.get_dummies(df['difficulty_level'], prefix='difficulty', drop_first=True)
+                df = pd.concat([df, diff_dummies], axis=1)
+
+            if 'subject_cluster' in df.columns:
+                subject_dummies = pd.get_dummies(df['subject_cluster'], prefix='subject', drop_first=True)
+                df = pd.concat([df, subject_dummies], axis=1)
+
+            frames.append(df)
+
+        if not frames:
+            print("�?O No round-level datasets available")
+            return None
+
+        self._round_level_data = pd.concat(frames, ignore_index=True)
+        return self._round_level_data
+
+    def _get_best_model_coefficients(self):
+        """Fetch coefficients for the top-performing AFT model."""
+        if 'model_performance' not in self.data or 'all_coefficients' not in self.data:
+            return None, None
+
+        perf_df = self.data['model_performance']
+        perf_df = perf_df[perf_df['c_index'].notna()]
+        if perf_df.empty:
+            return None, None
+
+        best_row = perf_df.sort_values('c_index', ascending=False).iloc[0]
+        best_model = best_row['model_name']
+
+        coeff_df = self.data['all_coefficients']
+        coeff_df = coeff_df[coeff_df['model_name'] == best_model].copy()
+        if coeff_df.empty:
+            return best_model, None
+
+        def _extract_tokens(raw_value):
+            try:
+                parsed = ast.literal_eval(raw_value)
+            except Exception:
+                return None, None
+
+            if isinstance(parsed, tuple) and len(parsed) >= 2:
+                return parsed[0], parsed[1]
+            return None, None
+
+        coeff_df[['param', 'feature_name']] = coeff_df['feature'].apply(
+            lambda item: pd.Series(_extract_tokens(item))
+        )
+        coeff_df = coeff_df[coeff_df['feature_name'].notna()]
+        if coeff_df.empty:
+            return best_model, None
+
+        primary_params = {'lambda_', 'mu_', 'alpha_'}
+        filtered = coeff_df[coeff_df['param'].isin(primary_params)].copy()
+        if filtered.empty:
+            filtered = coeff_df.copy()
+
+        coeff_map = dict(zip(filtered['feature_name'], filtered['coef'].astype(float)))
+        return best_model, coeff_map
+
+    def plot_driver_dynamics_over_time(self):
+        """Plot how driver effects evolve over the eight follow-up rounds."""
+        print("\n🎬 CREATING DRIVER DYNAMICS OVER TIME")
+        print("=" * 60)
+
+        # Load round-level data
+        combined_df = self._load_round_level_data()
+        if combined_df is None:
+            print("❌ Driver dynamics skipped (data unavailable)")
+            return
+
+        # Get best model coefficients 
+        if 'feature_importance' not in self.data:
+            print("❌ Driver dynamics skipped (feature importance unavailable)")
+            return
+            
+        # Use feature importance data which has clean coefficient mapping
+        importance_df = self.data['feature_importance'].copy()
+        
+        # Create coefficient map from feature importance data
+        coeff_map = {}
+        for _, row in importance_df.iterrows():
+            feature_name = str(row['feature'])
+            # Extract clean feature name from tuple format
+            if 'prompt_to_prompt_drift' in feature_name:
+                coeff_map['prompt_to_prompt_drift'] = row['coef']
+            elif 'context_to_prompt_drift' in feature_name:
+                coeff_map['context_to_prompt_drift'] = row['coef']
+            elif 'cumulative_drift' in feature_name:
+                coeff_map['cumulative_drift'] = row['coef']
+            elif 'prompt_complexity' in feature_name:
+                coeff_map['prompt_complexity'] = row['coef']
+        
+        print(f"📊 Found coefficients for {len(coeff_map)} drift features")
+        
+        # Focus on drift features that we have coefficients for
+        drift_features = [feat for feat in ['prompt_to_prompt_drift', 'context_to_prompt_drift', 
+                                          'cumulative_drift', 'prompt_complexity'] if feat in coeff_map]
+        
+        if not drift_features:
+            print("❌ No drift features with coefficients found")
+            return
+            
+        # Don't drop all NaN rows - instead handle missing data intelligently
+        print(f"📈 Original data: {len(combined_df)} observations across {combined_df['round'].nunique()} rounds")
+        
+        # Check data availability by round
+        for i, feature in enumerate(drift_features):
+            non_null_by_round = combined_df.groupby('round')[feature].count()
+            print(f"   {feature}: data available for rounds {list(non_null_by_round[non_null_by_round > 0].index)}")
+        
+        clean_df = combined_df.copy()  # Keep all data, handle NaN in visualization
+        
+        # Create visualization
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        fig.suptitle('AFT Driver Dynamics: How Risk Factors Evolve Across 8 Rounds', 
+                     fontsize=16, fontweight='bold')
+        
+        # Plot 1: Individual drift features over time (top-left)
+        ax1 = axes[0, 0]
+        colors = ['red', 'orange', 'green', 'blue']
+        
+        # Force all 8 rounds to be shown
+        all_rounds = list(range(1, 9))
+        
+        for i, feature in enumerate(drift_features):
+            # Calculate mean feature value by round, including NaN handling
+            round_means = clean_df.groupby('round')[feature].mean()
+            
+            # Extend to all 8 rounds, filling missing values appropriately
+            full_round_data = []
+            full_round_indices = []
+            
+            for round_num in all_rounds:
+                if round_num in round_means.index and not pd.isna(round_means[round_num]):
+                    # Use actual data
+                    full_round_data.append(round_means[round_num])
+                    full_round_indices.append(round_num)
+                elif round_num > 4:  # For rounds 5-8, conversations have likely ended
+                    # Use the last known value (round 4 or earlier) to show trend
+                    last_known_idx = max([r for r in round_means.index if r <= round_num and not pd.isna(round_means[r])], default=None)
+                    if last_known_idx:
+                        # Use last known value but mark as extrapolated
+                        full_round_data.append(round_means[last_known_idx])
+                        full_round_indices.append(round_num)
+            
+            if len(full_round_data) > 0:
+                # Calculate acceleration factor: exp(coeff * mean_value)
+                coeff = coeff_map[feature]
+                acceleration_factors = np.exp(coeff * np.array(full_round_data))
+                
+                # Plot with different styles for actual vs extrapolated data
+                actual_rounds = [r for r in full_round_indices if r <= 4]
+                actual_afs = [acceleration_factors[full_round_indices.index(r)] for r in actual_rounds]
+                
+                # Plot actual data with solid line
+                if len(actual_rounds) > 1:
+                    ax1.plot(actual_rounds, actual_afs, 
+                            marker='o', linewidth=2, color=colors[i % len(colors)], linestyle='-',
+                            label=f'{self._clean_feature_name(feature)} (β={coeff:.3f})')
+                
+                # Plot extrapolated data with dashed line if available
+                if len(full_round_indices) > len(actual_rounds):
+                    extrap_rounds = [r for r in full_round_indices if r > 4]
+                    extrap_afs = [acceleration_factors[full_round_indices.index(r)] for r in extrap_rounds]
+                    
+                    if len(extrap_rounds) > 0:
+                        # Connect last actual point to extrapolated points
+                        connect_rounds = [actual_rounds[-1]] + extrap_rounds if actual_rounds else extrap_rounds
+                        connect_afs = [actual_afs[-1]] + extrap_afs if actual_afs else extrap_afs
+                        
+                        ax1.plot(connect_rounds, connect_afs, 
+                                marker='s', linewidth=1, color=colors[i % len(colors)], 
+                                linestyle='--', alpha=0.6)
+        
+        ax1.axhline(1.0, color='black', linestyle='--', alpha=0.7, label='Neutral (AF=1.0)')
+        ax1.set_xlabel('Follow-up Round')
+        ax1.set_ylabel('Acceleration Factor')
+        ax1.set_title('Individual Drift Feature Evolution\n(Solid=Actual Data, Dashed=Extrapolated)')
+        ax1.legend(fontsize=9)
+        ax1.grid(True, alpha=0.3)
+        ax1.set_yscale('log')  # Log scale for better visibility
+        ax1.set_xlim(0.5, 8.5)  # Show all 8 rounds
+        ax1.set_xticks(range(1, 9))  # Show all round numbers
+        
+        # Plot 2: Combined risk score over time (top-right)
+        ax2 = axes[0, 1]
+        
+        # Calculate combined risk score for all 8 rounds
+        combined_risk = []
+        risk_rounds = []
+        
+        for round_num in range(1, 9):
+            round_data = clean_df[clean_df['round'] == round_num]
+            if len(round_data) == 0:
+                continue
+                
+            # Calculate weighted risk score
+            risk_score = 0
+            valid_features = 0
+            
+            for feature in drift_features:
+                if feature in round_data.columns:
+                    mean_val = round_data[feature].mean()
+                    if not np.isnan(mean_val):
+                        coeff = coeff_map[feature]
+                        # Convert to risk: negative coeff = risk, positive = protective
+                        risk_contribution = -coeff * mean_val if coeff < 0 else coeff * mean_val
+                        risk_score += risk_contribution
+                        valid_features += 1
+            
+            # Only include rounds with at least some valid data
+            if valid_features > 0:
+                combined_risk.append(risk_score)
+                risk_rounds.append(round_num)
+        
+        if len(combined_risk) > 0:
+            # Plot actual data
+            actual_risk_rounds = [r for r in risk_rounds if r <= 4]
+            actual_risk_scores = [combined_risk[risk_rounds.index(r)] for r in actual_risk_rounds]
+            
+            ax2.plot(actual_risk_rounds, actual_risk_scores, 
+                    marker='s', linewidth=3, color='purple', label='Combined Risk Score')
+            
+            # Add note about data availability
+            if max(risk_rounds) <= 4:
+                ax2.text(0.95, 0.05, 'Data available\nonly for rounds 1-4', 
+                        transform=ax2.transAxes, ha='right', va='bottom',
+                        bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.7))
+        ax2.set_xlabel('Follow-up Round')
+        ax2.set_ylabel('Combined Risk Score')
+        ax2.set_title('Overall Risk Evolution')
+        ax2.grid(True, alpha=0.3)
+        ax2.legend()
+        ax2.set_xlim(0.5, 8.5)  # Show all 8 rounds
+        ax2.set_xticks(range(1, 9))  # Show all round numbers
+        
+        # Plot 3: Feature value distributions by round (bottom-left)
+        ax3 = axes[1, 0]
+        
+        # Create boxplot for most important feature
+        most_important_feature = max(drift_features, key=lambda x: abs(coeff_map[x]))
+        
+        round_data_for_box = []
+        round_labels = []
+        
+        # Check all 8 rounds but only include those with data
+        for round_num in range(1, 9):
+            round_vals = clean_df[clean_df['round'] == round_num][most_important_feature].dropna()
+            if len(round_vals) > 0:
+                round_data_for_box.append(round_vals)
+                round_labels.append(f'R{round_num}')
+        
+        if round_data_for_box:
+            bp = ax3.boxplot(round_data_for_box, labels=round_labels, patch_artist=True)
+            for patch in bp['boxes']:
+                patch.set_facecolor('lightblue')
+                patch.set_alpha(0.7)
+        
+        ax3.set_xlabel('Follow-up Round')
+        ax3.set_ylabel(f'{self._clean_feature_name(most_important_feature)} Value')
+        ax3.set_title(f'Distribution of {self._clean_feature_name(most_important_feature)}\n(Most Important Feature)')
+        ax3.grid(True, alpha=0.3)
+        
+        # Plot 4: Summary statistics (bottom-right)
+        ax4 = axes[1, 1]
+        ax4.axis('off')
+        
+        # Create summary text
+        summary_text = []
+        summary_text.append("🎯 KEY INSIGHTS:")
+        summary_text.append("")
+        
+        for feature in drift_features:
+            coeff = coeff_map[feature]
+            effect = "🚨 RISK" if coeff < 0 else "🛡️ PROTECTIVE"
+            summary_text.append(f"{effect}: {self._clean_feature_name(feature)}")
+            summary_text.append(f"   Coefficient: {coeff:.3f}")
+            
+            # Calculate trend
+            round_means = clean_df.groupby('round')[feature].mean()
+            if len(round_means) > 1:
+                trend = "↗️ Increasing" if round_means.iloc[-1] > round_means.iloc[0] else "↘️ Decreasing"
+                summary_text.append(f"   Trend: {trend}")
+            summary_text.append("")
+        
+        # Add model info
+        if 'model_performance' in self.data:
+            best_model_row = self.data['model_performance'].loc[self.data['model_performance']['c_index'].idxmax()]
+            summary_text.append(f"🏆 Best Model: {best_model_row['model_type']}")
+            summary_text.append(f"   C-index: {best_model_row['c_index']:.4f}")
+        
+        summary_str = '\n'.join(summary_text)
+        ax4.text(0.05, 0.95, summary_str, transform=ax4.transAxes, fontsize=10,
+                verticalalignment='top', fontfamily='monospace',
+                bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.8))
+        
+        plt.tight_layout()
+        
+        # Save plot
+        output_path = f'{self.figures_dir}/driver_dynamics_evolution.png'
+        plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+        plt.close(fig)
+        
+        print(f"✅ Driver dynamics plot saved to {output_path}")
+
     def _clean_feature_name(self, feature_name):
         """Clean up feature names for better display"""
         if pd.isna(feature_name):
@@ -998,7 +1347,10 @@ class AFTVisualizer:
         
         self.plot_survival_insights_analysis()
         print("=" * 80)
-        
+
+        self.plot_driver_dynamics_over_time()
+        print("=" * 80)
+
         self.plot_subject_cluster_analysis()
         print("=" * 80)
         
@@ -1013,6 +1365,7 @@ class AFTVisualizer:
         print("   • aft_coefficients_heatmap.png - Cross-model coefficient comparison")
         print("   • aft_rankings_dashboard.png - Comprehensive model rankings")
         print("   • aft_survival_insights.png - Risk/protective factors analysis")
+        print("   • driver_dynamics_evolution.png - Driver dynamics across rounds")
         print("   • aft_subject_cluster_analysis.png - Subject cluster impact analysis")
         print("   • aft_difficulty_level_analysis.png - Difficulty level progression analysis")
 

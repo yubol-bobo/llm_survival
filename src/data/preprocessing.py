@@ -24,11 +24,17 @@ def cosine_dist(a, b):
         return None
     return 1 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-# Only process the three new models
-print("🚀 Processing new models: gpt_5")
+# Process all models found in data/raw
+print("🚀 Processing ALL models from data/raw directory")
 print("=" * 60)
 
-for model in ['qwen_3', 'gpt_5']:
+# Get all model directories from data/raw (filter out non-model directories)
+all_dirs = [d for d in os.listdir(RAW_DATA_DIR) if os.path.isdir(os.path.join(RAW_DATA_DIR, d))]
+# Filter to only include directories that don't start with 'cleaned_data'
+raw_models = [d for d in all_dirs if not d.startswith('cleaned_data')]
+print(f"🔍 Found model directories in {RAW_DATA_DIR}: {raw_models}")
+
+for model in raw_models:
     print(f"\n📊 Processing model: {model}")
     model_path = os.path.join(RAW_DATA_DIR, model)
     if not os.path.isdir(model_path):
@@ -123,18 +129,21 @@ for model in ['qwen_3', 'gpt_5']:
         prompt_complexities = []
         context_texts = []
         # Prepare for drift calculations (for rounds 0 to 8)
+        user_round = 0
         for i, msg in enumerate(conv):
-            if msg['role'] == 'user' and i <= max_followup_round:
-                prompt = msg['content']
-                prompt_embeddings.append(model_embed.encode(prompt, show_progress_bar=False))
-                prompt_complexities.append(len(prompt.split()))
-                # Context is prompt0 + all prior prompts & responses up to this round
-                context = ''
-                for m in conv[:i]:
-                    context += m['content'] + ' '
-                context += prompt
-                context_texts.append(context)
-                context_embeddings.append(model_embed.encode(context, show_progress_bar=False))
+            if msg['role'] == 'user':
+                if user_round <= max_followup_round:
+                    prompt = msg['content']
+                    prompt_embeddings.append(model_embed.encode(prompt, show_progress_bar=False))
+                    prompt_complexities.append(len(prompt.split()))
+                    # Context is prompt0 + all prior prompts & responses up to this round
+                    context = ''
+                    for m in conv[:i]:
+                        context += m['content'] + ' '
+                    context += prompt
+                    context_texts.append(context)
+                    context_embeddings.append(model_embed.encode(context, show_progress_bar=False))
+                user_round += 1
         # Calculate drifts (for rounds 0 to 8)
         prompt_to_prompt_drifts = [None]
         for i in range(1, len(prompt_embeddings)):
