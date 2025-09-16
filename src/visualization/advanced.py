@@ -728,8 +728,8 @@ class AdvancedModelVisualizer:
             advanced.load_data()
             
             # Define subject clusters (7 actual clusters from data)
-            subject_clusters = ['Business_Economics', 'Medical_Health', 'STEM', 'Humanities',
-                              'Social_Sciences', 'Law_Legal', 'General_Knowledge']
+            subject_clusters = ['Business_Economics', 'General_Knowledge', 'Humanities', 
+                              'Law_Legal', 'Medical_Health', 'STEM', 'Social_Sciences']
             
             # Create 2x4 subplot
             fig, axes = plt.subplots(2, 4, figsize=(20, 10))
@@ -1209,6 +1209,136 @@ class AdvancedModelVisualizer:
         except Exception as e:
             print(f"❌ Error creating drift-specific rankings: {e}")
 
+    def plot_semantic_drift_effects_top5(self):
+        """Create grouped bar chart showing semantic drift effects for top 5 models."""
+        print("🎨 Generating semantic drift effects for top 5 models...")
+        
+        try:
+            # Load interaction effects data
+            interaction_effects = pd.read_csv(f'{self.results_dir}/interaction_effects.csv')
+            
+            # Parse drift types and models
+            def extract_components(term):
+                if '_drift_x_model_' in term:
+                    parts = term.split('_drift_x_model_')
+                    return parts[0] + '_drift', parts[1]
+                elif '_x_model_' in term:
+                    parts = term.split('_x_model_')
+                    return parts[0], parts[1]
+                return None, None
+            
+            interaction_effects[['drift_type', 'model']] = interaction_effects['interaction_term'].apply(
+                lambda x: pd.Series(extract_components(x))
+            )
+            
+            # Focus on the three main drift types
+            drift_types = ['prompt_to_prompt_drift', 'context_to_prompt_drift', 'cumulative_drift']
+            drift_data = interaction_effects[interaction_effects['drift_type'].isin(drift_types)].copy()
+            
+            # Identify top 5 models by highest absolute coefficient magnitude (most interaction effect)
+            model_avg_abs_coef = drift_data.groupby('model')['coefficient'].apply(lambda x: np.abs(x).mean()).sort_values(ascending=False)
+            top5_models = model_avg_abs_coef.head(5).index.tolist()
+            
+            # Filter to top 5 models
+            top5_data = drift_data[drift_data['model'].isin(top5_models)].copy()
+            
+            # Clean names for display
+            top5_data['model_clean'] = top5_data['model'].str.replace('_', ' ').str.title()
+            drift_labels = {
+                'prompt_to_prompt_drift': 'P2P Drift',
+                'context_to_prompt_drift': 'C2P Drift', 
+                'cumulative_drift': 'Cumulative Drift'
+            }
+            
+            # Create the plot
+            fig, ax = plt.subplots(figsize=(14, 8))
+            
+            # Prepare data for grouped bars
+            models = sorted(top5_models, key=lambda x: model_avg_abs_coef[x], reverse=True)
+            model_labels = [m.replace('_', ' ').title() for m in models]
+            
+            # Bar positions
+            x = np.arange(len(models))
+            width = 0.25
+            
+            # Colors for the three drift types
+            drift_colors = {
+                'prompt_to_prompt_drift': COLORS['primary'],      # Blue
+                'context_to_prompt_drift': COLORS['secondary'],   # Magenta
+                'cumulative_drift': COLORS['success']             # Orange
+            }
+            
+            # Plot bars for each drift type
+            for i, drift_type in enumerate(drift_types):
+                coefficients = []
+                significances = []
+                
+                for model in models:
+                    model_drift_data = top5_data[(top5_data['model'] == model) & 
+                                                (top5_data['drift_type'] == drift_type)]
+                    if len(model_drift_data) > 0:
+                        coefficients.append(model_drift_data['coefficient'].iloc[0])
+                        significances.append(model_drift_data['significant'].iloc[0])
+                    else:
+                        coefficients.append(0)
+                        significances.append(False)
+                
+                # Create bars
+                bars = ax.bar(x + i * width, coefficients, width, 
+                             label=drift_labels[drift_type], 
+                             color=drift_colors[drift_type], 
+                             alpha=0.8)
+                
+                # Add significance stars
+                for j, (bar, coef, sig) in enumerate(zip(bars, coefficients, significances)):
+                    height = bar.get_height()
+                    # Significance stars removed as requested
+                    
+                    # Add coefficient value labels (positioned to avoid overlap)
+                    if height >= 0:
+                        label_y = height + 1.0  # Above positive bars
+                        va = 'bottom'
+                    else:
+                        label_y = height - 1.0  # Below negative bars
+                        va = 'top'
+                    
+                    ax.text(bar.get_x() + bar.get_width()/2, label_y, f'{coef:.1f}',
+                           ha='center', va=va, fontsize=9, fontweight='bold')
+            
+            # Customize plot
+            ax.set_xlabel('Models (Ranked by Interaction Magnitude)', fontsize=12, fontweight='bold')
+            ax.set_ylabel('Interaction Coefficient', fontsize=12, fontweight='bold')
+            ax.set_title('Semantic Drift Effects on Failure Risk\n(Top 5 Models by Interaction Strength)', 
+                        fontsize=14, fontweight='bold', pad=20)
+            
+            # Set x-axis labels
+            ax.set_xticks(x + width)
+            ax.set_xticklabels(model_labels, rotation=45, ha='right')
+            
+            # Add horizontal line at y=0
+            ax.axhline(y=0, color='black', linestyle='-', alpha=0.3, linewidth=1)
+            
+            # Add grid
+            ax.grid(True, alpha=0.3, axis='y')
+            
+            # Move legend to bottom center, below x-axis tick labels
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), 
+                     fontsize=11, ncol=3, frameon=False)
+            
+            plt.tight_layout()
+            plt.subplots_adjust(bottom=0.25)  # Add more space for legend below x-axis
+            
+            # Save plot
+            for fmt in ['png', 'pdf']:
+                plt.savefig(f'{self.output_dir}/semantic_drift_effects_top5.{fmt}', 
+                           bbox_inches='tight', dpi=300)
+            
+            plt.close()
+            print("✅ Created semantic drift effects for top 5 models")
+            
+        except Exception as e:
+            print(f"❌ Error creating semantic drift effects plot: {e}")
+
     def generate_all_visualizations(self):
         """Generate all advanced visualization plots."""
         print("🎨 GENERATING ADVANCED MODELING VISUALIZATIONS")
@@ -1230,10 +1360,11 @@ class AdvancedModelVisualizer:
         self.plot_interaction_magnitude_comparison()
         self.plot_model_interaction_profiles()
         self.plot_drift_specific_rankings()
+        self.plot_semantic_drift_effects_top5()
         
         print(f"\n✅ ALL ADVANCED VISUALIZATIONS COMPLETED!")
         print(f"📁 Plots saved to: {self.output_dir}/")
-        print("📊 Generated 13 advanced modeling plots:")
+        print("📊 Generated 14 advanced modeling plots:")
         print("   • interaction_effects_heatmap (drift×model interaction matrix)")
         print("   • model_comparison_dashboard (baseline vs interaction performance)")
         print("   • interaction_forest_plot (significant interaction hazard ratios)")
@@ -1247,6 +1378,7 @@ class AdvancedModelVisualizer:
         print("   • interaction_magnitude_comparison (4-panel interaction analysis)")
         print("   • model_interaction_profiles (radar charts for each model)")
         print("   • drift_specific_rankings (model rankings by drift type)")
+        print("   • semantic_drift_effects_top5 (grouped bars for top 5 models)")
         print("   • All plots saved in PNG and PDF formats")
 
 

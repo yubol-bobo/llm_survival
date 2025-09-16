@@ -54,37 +54,33 @@ class BaselineModeling:
     def _create_subject_clusters(self):
         """Create 7 meaningful subject clusters from 39 individual subjects."""
         return {
-            'STEM': [
-                'mathematics', 'statistics', 'abstract_algebra',
-                'physics', 'conceptual_physics', 'astronomy', 
-                'chemistry', 'computer_science', 'computer_security', 
-                'machine_learning', 'electrical_engineering'
+            'Business_Economics': [
+                'accounting', 'econometrics', 'management', 
+                'marketing', 'microeconomics'
             ],
-            'Medical_Health': [
-                'medicine', 'clinical_knowledge', 'medical_genetics',
-                'biology', 'anatomy', 'virology',
-                'nutrition', 'human_sexuality'
-            ],
-            'Social_Sciences': [
-                'psychology', 'sociology',
-                'moral_scenarios', 'global_facts'
+            'General_Knowledge': [
+                'common sense', 'truthful'
             ],
             'Humanities': [
-                'philosophy', 'jurisprudence', 'logical_fallacies',
-                'moral_disputes', 'world_religions'
+                'formal_logic', 'philosophy', 'prehistory', 
+                'us_history', 'world_history', 'world_religions'
             ],
-            'Business_Economics': [
-                'business_ethics', 'econometrics', 'microeconomics',
-                'macroeconomics', 'management', 'marketing'
+            'Law_Legal': [
+                'international_law', 'jurisprudence', 'law'
             ],
-            'Arts_Culture': [
-                'prehistory', 'us_foreign_policy', 'high_school_geography',
-                'miscellaneous', 'high_school_government_and_politics'
+            'Medical_Health': [
+                'anatomy', 'biology', 'clinical_knowledge', 
+                'human_sexuality', 'medical_genetics', 'medicine', 
+                'nutrition', 'virology'
             ],
-            'Education': [
-                'elementary_mathematics', 'high_school_biology',
-                'high_school_chemistry', 'high_school_mathematics',
-                'high_school_physics', 'high_school_world_history'
+            'STEM': [
+                'abstract_algebra', 'astronomy', 'chemistry', 
+                'computer_science', 'computer_security', 'conceptual_physics', 
+                'electrical_engineering', 'machine_learning', 'mathematics', 
+                'physics', 'statistics'
+            ],
+            'Social_Sciences': [
+                'global_facts', 'moral_scenarios', 'psychology', 'sociology'
             ]
         }
         
