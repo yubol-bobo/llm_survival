@@ -93,27 +93,27 @@ class BaselineModeling:
         
     def load_data(self):
         """Load and process data from data/ directories."""
-        print("📊 LOADING DATA FROM data/raw/ AND data/processed/")
-        print("=" * 50)
-        
-        # Load cleaned reference data (use the file with existing clusters)
-        cleaned_data_path = 'data/raw/cleaned_data_with_clusters.csv'
+        print("📊 LOADING TRAINING DATA FROM data/raw/train/ AND data/processed/train/")
+        print("=" * 65)
+
+        # Load cleaned reference data from TRAIN split ONLY
+        cleaned_data_path = 'data/raw/train/cleaned_data_with_clusters.csv'
         if not os.path.exists(cleaned_data_path):
-            raise FileNotFoundError(f"Required file not found: {cleaned_data_path}")
-            
+            raise FileNotFoundError(f"Train data not found: {cleaned_data_path}. Run train/test split first using --stage data_split!")
+
         cleaned_data = pd.read_csv(cleaned_data_path)
-        
+
         # Use existing subject_cluster from the data, or map if missing
         if 'subject_cluster' not in cleaned_data.columns:
             cleaned_data['subject_cluster'] = cleaned_data['subject'].apply(self._map_subject_to_cluster)
-        
+
         # Use the original level as difficulty_level
         cleaned_data['difficulty_level'] = cleaned_data['level']
-        
-        # Load processed model data (already contains subject_cluster)
-        processed_dir = 'data/processed'
+
+        # Load processed model data from TRAIN split
+        processed_dir = 'data/processed/train'
         if not os.path.exists(processed_dir):
-            raise FileNotFoundError(f"Processed data directory not found: {processed_dir}")
+            raise FileNotFoundError(f"Train data not found: {processed_dir}. Run train/test split first using --stage data_split!")
         
         model_dirs = [d for d in os.listdir(processed_dir) if os.path.isdir(os.path.join(processed_dir, d))]
         

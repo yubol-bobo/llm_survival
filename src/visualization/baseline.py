@@ -941,16 +941,23 @@ class BaselineCombinedVisualizer:
                 ax.spines['right'].set_visible(False)
                 ax.spines['left'].set_color('#CCCCCC')
                 ax.spines['bottom'].set_color('#CCCCCC')
-            
+
             # Add a single legend for all subplots at the bottom, flattened in 2 lines
             handles, labels = axes[0].get_legend_handles_labels()
-            ncol = len(handles) // 2 if len(handles) % 2 == 0 else (len(handles) + 1) // 2
-            fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02), 
-                      fontsize=10, ncol=ncol, frameon=False)
-            
+
+            # Only create legend if there are handles to display
+            if len(handles) > 0:
+                ncol = len(handles) // 2 if len(handles) % 2 == 0 else (len(handles) + 1) // 2
+                ncol = max(1, ncol)  # Ensure ncol is at least 1
+                fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02),
+                          fontsize=10, ncol=ncol, frameon=False)
+                plt.subplots_adjust(bottom=0.15)  # Reduce gap for legend at bottom
+            else:
+                print("⚠️  No data available for difficulty level plots - skipping legend")
+                plt.subplots_adjust(bottom=0.05)  # Less gap if no legend
+
             plt.tight_layout()
-            plt.subplots_adjust(bottom=0.15)  # Reduce gap for legend at bottom
-            plt.savefig(f'{self.output_dir}/cumulative_hazard_by_difficulty.png', 
+            plt.savefig(f'{self.output_dir}/cumulative_hazard_by_difficulty.png',
                        dpi=300, bbox_inches='tight')
             plt.savefig(f'{self.output_dir}/cumulative_hazard_by_difficulty.pdf', 
                        bbox_inches='tight')
@@ -1099,16 +1106,23 @@ class BaselineCombinedVisualizer:
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_color('#CCCCCC')
             ax.spines['bottom'].set_color('#CCCCCC')
-            
+
             # Add a single legend for all subplots at the bottom, flattened in 2 lines
             handles, labels = axes[0].get_legend_handles_labels()
-            ncol = len(handles) // 2 if len(handles) % 2 == 0 else (len(handles) + 1) // 2
-            fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02), 
-                      fontsize=10, ncol=ncol, frameon=False)
-            
+
+            # Only create legend if there are handles to display
+            if len(handles) > 0:
+                ncol = len(handles) // 2 if len(handles) % 2 == 0 else (len(handles) + 1) // 2
+                ncol = max(1, ncol)  # Ensure ncol is at least 1
+                fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02),
+                          fontsize=10, ncol=ncol, frameon=False)
+                plt.subplots_adjust(bottom=0.15)  # Reduce gap for legend at bottom
+            else:
+                print("⚠️  No data available for subject cluster plots - skipping legend")
+                plt.subplots_adjust(bottom=0.05)  # Less gap if no legend
+
             plt.tight_layout()
-            plt.subplots_adjust(bottom=0.15)  # Reduce gap for legend at bottom
-            plt.savefig(f'{self.output_dir}/cumulative_hazard_by_subject_cluster.png', 
+            plt.savefig(f'{self.output_dir}/cumulative_hazard_by_subject_cluster.png',
                        dpi=300, bbox_inches='tight')
             plt.savefig(f'{self.output_dir}/cumulative_hazard_by_subject_cluster.pdf', 
                        bbox_inches='tight')

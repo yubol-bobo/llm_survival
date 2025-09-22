@@ -94,33 +94,13 @@ class AdvancedModeling:
         
     def load_data(self):
         """Load and process data from data/ directories."""
-        print("📊 LOADING DATA FROM data/raw/ AND data/processed/")
+        print("📊 LOADING TRAINING DATA FROM data/processed/train/")
         print("=" * 50)
-        
-        # Load cleaned reference data
-        cleaned_data_path = 'data/raw/cleaned_data - cleaned_data.csv'
-        if not os.path.exists(cleaned_data_path):
-            raise FileNotFoundError(f"Required file not found: {cleaned_data_path}")
-            
-        cleaned_data = pd.read_csv(cleaned_data_path)
-        cleaned_data['subject_cluster'] = cleaned_data['subject'].apply(self._map_subject_to_cluster)
-        
-        # Use the original level as difficulty_level
-        cleaned_data['difficulty_level'] = cleaned_data['level']
-        
-        # Build lookup for questions
-        question_lookup = {}
-        for _, row in cleaned_data.iterrows():
-            question_lookup[str(row['question']).strip()] = {
-                'subject_cluster': row['subject_cluster'],
-                'difficulty_level': row['difficulty_level']
-            }
-        
-        # Load processed model data
-        processed_dir = 'data/processed'
+
+        # Load processed model data from TRAIN split ONLY
+        processed_dir = 'data/processed/train'
         if not os.path.exists(processed_dir):
-            raise FileNotFoundError(f"Processed data directory not found: {processed_dir}")
-        
+            raise FileNotFoundError(f"Train data not found: {processed_dir}. Run train/test split first using --stage data_split!")
         model_dirs = [d for d in os.listdir(processed_dir) if os.path.isdir(os.path.join(processed_dir, d))]
         
         for model_name in tqdm(model_dirs, desc="Loading models"):

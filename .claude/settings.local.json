@@ -11,7 +11,8 @@
       "Bash(for model in claude_35 deepseek_r1 gpt_4o gpt_oss llama_33 llama_4_maverick mistral_large qwen_2.5 qwen_3)",
       "Bash(do tail -n +2 $model/$model_long.csv)",
       "Bash(done)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Read(//d//**)"
     ],
     "deny": [],
     "ask": []

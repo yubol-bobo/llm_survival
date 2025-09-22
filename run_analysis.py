@@ -7,24 +7,29 @@ Clean, organized pipeline for LLM robustness survival analysis.
 Runs modeling stages in proper order with consistent data handling.
 
 Stages:
+0. Data splitting - Stratified train/test split with integrated preprocessing
 1. Baseline modeling - Basic Cox PH survival analysis
 2. Advanced modeling - Interaction effects with drift×model terms
 3. AFT modeling - Accelerated Failure Time models
-4. RSF modeling - Random Survival Forest with hyperparameter tuning
-5. Visualization generation - Publication-ready plots
+4. RSF modeling - (Currently disabled)
+5. Test evaluation - Predictive performance on held-out test set
+6. Visualization generation - Publication-ready plots
 
 Usage:
     python run_analysis.py [--stage STAGE]
 
-    --stage: Run specific stage only (baseline, advanced, aft, rsf, visualization, all)
+    --stage: Run specific stage only (data_split, baseline, advanced, aft, rsf, test_evaluation, visualization, all)
              Each stage automatically includes its visualizations
 
 Outputs:
+    - data/raw/train/[model]/ and data/raw/test/[model]/
+    - data/processed/train/[model]/ and data/processed/test/[model]/
     - results/outputs/baseline/*.csv
     - results/outputs/advanced/*.csv
     - results/outputs/aft/*.csv
     - results/outputs/rsf/*.csv
-    - results/figures/*/*.png/.pdf (if --viz flag used)
+    - results/outputs/test_evaluation/*.csv
+    - results/figures/*/*.png/.pdf
 """
 
 import argparse
@@ -35,10 +40,12 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent / 'src'))
 
+from data.enhanced_train_test_split import EnhancedTrainTestSplitter
 from modeling.baseline import BaselineModeling
 from modeling.advanced import AdvancedModeling
 from modeling.aft import AFTModeling
-from modeling.rsf import RSFModeling
+# from modeling.rsf import RSFModeling  # Disabled for now
+from evaluation.test_evaluation import TestEvaluator
 from visualization.baseline import BaselineCombinedVisualizer
 from visualization.baseline_summary import create_baseline_summary
 from visualization.advanced import AdvancedModelVisualizer
@@ -49,11 +56,30 @@ class LLMSurvivalPipeline:
     """Main pipeline for LLM survival analysis."""
     
     def __init__(self):
+        self.data_splitter = None
         self.baseline_model = None
         self.advanced_model = None
         self.aft_model = None
         self.rsf_model = None
-        
+        self.test_evaluator = None
+
+    def run_data_split_stage(self):
+        """Run data splitting stage with stratified train/test split."""
+        print("🚀 STAGE 0: DATA SPLITTING")
+        print("=" * 40)
+
+        try:
+            print("🔧 Running enhanced train/test split with stratification...")
+            print("   Will overwrite any existing train/test splits")
+            self.data_splitter = EnhancedTrainTestSplitter(test_size=0.2, random_state=42)
+            self.data_splitter.run_enhanced_split()
+            print("✅ Data splitting completed successfully")
+            return True
+
+        except Exception as e:
+            print(f"❌ Data splitting failed: {e}")
+            return False
+
     def run_baseline_stage(self, generate_viz=True):
         """Run baseline modeling stage."""
         print("🚀 STAGE 1: BASELINE MODELING")
@@ -140,24 +166,33 @@ class LLMSurvivalPipeline:
             return None
 
     def run_rsf_stage(self):
-        """Run RSF modeling stage."""
-        print("\n🚀 STAGE 4: RSF MODELING")
+        """Run RSF modeling stage (currently disabled)."""
+        print("\n🚀 STAGE 4: RSF MODELING (DISABLED)")
+        print("=" * 40)
+
+        print("⚠️  RSF modeling is currently disabled")
+        print("   To enable: uncomment RSF import and stage execution in run_analysis.py")
+        return None
+
+    def run_test_evaluation_stage(self):
+        """Run test evaluation stage."""
+        print("\n🚀 STAGE 5: TEST EVALUATION")
         print("=" * 40)
 
         try:
-            self.rsf_model = RSFModeling()
-            rsf_results = self.rsf_model.run_complete_analysis()
+            self.test_evaluator = TestEvaluator()
+            test_results = self.test_evaluator.run_complete_evaluation()
 
-            print("✅ RSF modeling completed successfully")
-            return rsf_results
+            print("✅ Test evaluation completed successfully")
+            return test_results
 
         except Exception as e:
-            print(f"❌ RSF modeling failed: {e}")
+            print(f"❌ Test evaluation failed: {e}")
             return None
 
     def run_visualization_stage(self):
         """Run visualization generation stage."""
-        print("\n🚀 STAGE 5: VISUALIZATION GENERATION")
+        print("\n🚀 STAGE 6: VISUALIZATION GENERATION")
         print("=" * 40)
         
         try:
@@ -203,9 +238,15 @@ class LLMSurvivalPipeline:
         """Run the complete analysis pipeline."""
         print("🔬 STARTING COMPLETE LLM SURVIVAL ANALYSIS PIPELINE")
         print("=" * 60)
-        
+
         results = {}
-        
+
+        # Stage 0: Data Splitting
+        results['data_split'] = self.run_data_split_stage()
+        if not results['data_split']:
+            print("❌ Pipeline aborted due to data splitting failure")
+            return results
+
         # Stage 1: Baseline
         results['baseline'] = self.run_baseline_stage()
 
@@ -215,8 +256,12 @@ class LLMSurvivalPipeline:
         # Stage 3: AFT
         results['aft'] = self.run_aft_stage()
 
-        # Stage 4: RSF
-        results['rsf'] = self.run_rsf_stage()
+        # Stage 4: RSF (disabled for now)
+        # results['rsf'] = self.run_rsf_stage()
+        results['rsf'] = None
+
+        # Stage 5: Test Evaluation
+        results['test_evaluation'] = self.run_test_evaluation_stage()
 
         # Final summary
         print("\n" + "=" * 60)
@@ -228,17 +273,19 @@ class LLMSurvivalPipeline:
             print(f"{stage.upper():.<20} {status}")
 
         successful_stages = sum(1 for r in results.values() if r is not None)
-        print(f"\n🎯 Completed {successful_stages}/4 modeling stages successfully")
+        print(f"\n🎯 Completed {successful_stages}/6 pipeline stages successfully")
         
         return results
     
     def run_stage(self, stage_name):
         """Run a specific modeling stage with its visualizations."""
         stage_functions = {
+            'data_split': self.run_data_split_stage,
             'baseline': lambda: self.run_baseline_stage(generate_viz=True),
             'advanced': lambda: self.run_advanced_stage(generate_viz=True),
             'aft': lambda: self.run_aft_stage(generate_viz=True),
             'rsf': self.run_rsf_stage,
+            'test_evaluation': self.run_test_evaluation_stage,
             'visualization': self.run_visualization_stage
         }
 
@@ -254,7 +301,7 @@ def main():
     """Main execution function with command line arguments."""
     parser = argparse.ArgumentParser(description='LLM Survival Analysis Pipeline')
     parser.add_argument('--stage', type=str, default='all',
-                       choices=['baseline', 'advanced', 'aft', 'rsf', 'visualization', 'all'],
+                       choices=['data_split', 'baseline', 'advanced', 'aft', 'rsf', 'test_evaluation', 'visualization', 'all'],
                        help='Specific stage to run (default: all)')
 
     args = parser.parse_args()

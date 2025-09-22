@@ -139,14 +139,14 @@ class AFTModeling:
         
     def load_data(self):
         """Load and prepare data for AFT modeling"""
-        print("📊 LOADING DATA FOR AFT MODELING")
+        print("📊 LOADING TRAINING DATA FOR AFT MODELING")
         print("=" * 50)
-        
+
         try:
-            # Load processed model data
-            processed_dir = 'data/processed'
+            # Load processed model data from TRAIN split ONLY
+            processed_dir = 'data/processed/train'
             if not os.path.exists(processed_dir):
-                raise FileNotFoundError(f"Processed data directory not found: {processed_dir}")
+                raise FileNotFoundError(f"Train data not found: {processed_dir}. Run train/test split first using --stage data_split!")
             
             model_dirs = [d for d in os.listdir(processed_dir) if os.path.isdir(os.path.join(processed_dir, d))]
             

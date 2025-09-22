@@ -50,16 +50,19 @@ class RSFModeling:
         self.results = {}
 
     def load_data(self):
-        """Load and process data from data/processed/ directories."""
-        print("📊 LOADING DATA FOR RSF MODELING")
+        """Load training data for RSF modeling from the stratified train split."""
+        print("Loading training data for RSF modeling")
         print("=" * 40)
 
-        # Load processed model data
-        processed_dir = 'data/processed'
+        # Load processed model data from TRAIN split
+        processed_dir = 'data/processed/train'
         if not os.path.exists(processed_dir):
-            raise FileNotFoundError(f"Processed data directory not found: {processed_dir}")
+            raise FileNotFoundError("Train split not found at data/processed/train/. Run the data_split stage first.")
 
         model_dirs = [d for d in os.listdir(processed_dir) if os.path.isdir(os.path.join(processed_dir, d))]
+
+        if not model_dirs:
+            raise ValueError("No model directories found in data/processed/train/. Run the data_split stage first.")
 
         for model_name in tqdm(model_dirs, desc="Loading models"):
             model_path = os.path.join(processed_dir, model_name)
