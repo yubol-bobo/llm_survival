@@ -68,6 +68,34 @@ class LLMSurvivalPipeline:
         print("🚀 STAGE 0: DATA SPLITTING")
         print("=" * 40)
 
+        train_dir = Path('data/processed/train')
+        test_dir = Path('data/processed/test')
+
+        def _has_conversation_id_column(directory: Path) -> bool:
+            try:
+                csv_files = sorted(directory.rglob('*.csv'))
+            except FileNotFoundError:
+                return False
+            for csv_path in csv_files:
+                try:
+                    with csv_path.open('r', encoding='utf-8') as handle:
+                        header_line = handle.readline().strip()
+                    if not header_line:
+                        continue
+                    headers = [h.strip() for h in header_line.split(',')]
+                    if 'conversation_id' in headers:
+                        return True
+                except OSError:
+                    continue
+            return False
+
+        if (train_dir.exists() and any(train_dir.iterdir()) and
+                test_dir.exists() and any(test_dir.iterdir()) and
+                _has_conversation_id_column(train_dir) and
+                _has_conversation_id_column(test_dir)):
+            print('Found existing train/test splits; skipping data splitting stage.')
+            return True
+
         try:
             print("🔧 Running enhanced train/test split with stratification...")
             print("   Will overwrite any existing train/test splits")

@@ -93,13 +93,13 @@ class BaselineModeling:
         
     def load_data(self):
         """Load and process data from data/ directories."""
-        print("📊 LOADING TRAINING DATA FROM data/raw/train/ AND data/processed/train/")
+        print("Loading training data from data/processed/train/")
         print("=" * 65)
 
         # Load cleaned reference data from TRAIN split ONLY
-        cleaned_data_path = 'data/raw/train/cleaned_data_with_clusters.csv'
+        cleaned_data_path = 'data/processed/cleaned_data_with_clusters.csv'
         if not os.path.exists(cleaned_data_path):
-            raise FileNotFoundError(f"Train data not found: {cleaned_data_path}. Run train/test split first using --stage data_split!")
+            raise FileNotFoundError(f"Processed metadata not found: {cleaned_data_path}. Run the data_split stage first.")
 
         cleaned_data = pd.read_csv(cleaned_data_path)
 
@@ -107,8 +107,9 @@ class BaselineModeling:
         if 'subject_cluster' not in cleaned_data.columns:
             cleaned_data['subject_cluster'] = cleaned_data['subject'].apply(self._map_subject_to_cluster)
 
-        # Use the original level as difficulty_level
-        cleaned_data['difficulty_level'] = cleaned_data['level']
+        # Ensure difficulty level metadata is available
+        if 'difficulty_level' not in cleaned_data.columns:
+            cleaned_data['difficulty_level'] = cleaned_data['level']
 
         # Load processed model data from TRAIN split
         processed_dir = 'data/processed/train'
