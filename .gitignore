@@ -156,8 +156,7 @@ results/figures/*.jpg
 .cache/
 
 # Data (if sensitive)
-data/raw/
-data/processed/
+data/
 
 # Model files
 *.pkl

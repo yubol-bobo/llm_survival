@@ -1297,29 +1297,558 @@ class AFTVisualizer:
             print(f"❌ Difficulty level analysis failed: {e}")
             plt.close()
     
+    def plot_hazard_ratio_by_difficulty(self):
+        """Create instantaneous hazard ratio plots by difficulty level for AFT models"""
+        print("\n📊 CREATING HAZARD RATIO BY DIFFICULTY")
+        print("=" * 50)
+
+        # Load round-level data for hazard calculations
+        combined_df = self._load_round_level_data()
+        if combined_df is None:
+            print("❌ No round-level data available for hazard ratio plots")
+            return
+
+        # Get best model coefficients
+        best_model, coeff_map = self._get_best_model_coefficients()
+        if coeff_map is None:
+            print("❌ No model coefficients available for hazard calculation")
+            return
+
+        print(f"📈 Using best model: {best_model}")
+        print(f"📊 Coefficients available: {len(coeff_map)}")
+
+        try:
+            # Define difficulty levels and models
+            difficulty_levels = ['elementary', 'high_school', 'college', 'professional']
+            available_levels = [level for level in difficulty_levels if f'difficulty_{level}' in combined_df.columns or level == 'elementary']
+
+            # Get unique models from the data
+            unique_models = sorted(combined_df['model'].unique()) if 'model' in combined_df.columns else ['Combined']
+
+            # Create subplot grid (2x2 for 4 difficulty levels)
+            fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+            fig.suptitle('AFT Hazard Ratio by Difficulty Level (Instantaneous)', fontsize=16, fontweight='bold')
+            axes = axes.flatten()
+
+            # Color palette for models
+            colors = plt.cm.tab10(np.linspace(0, 1, len(unique_models)))
+
+            for level_idx, difficulty in enumerate(available_levels):
+                if level_idx >= 4:  # Only plot first 4 levels
+                    break
+
+                ax = axes[level_idx]
+                ax.set_title(f'{difficulty.replace("_", " ").title()} Level (AFT)')
+
+                # Filter data for this difficulty level
+                if difficulty == 'elementary':
+                    # Elementary is reference level (all difficulty dummies = 0)
+                    level_data = combined_df.copy()
+                    for other_level in ['high_school', 'college', 'professional']:
+                        if f'difficulty_{other_level}' in level_data.columns:
+                            level_data = level_data[level_data[f'difficulty_{other_level}'] == 0]
+                else:
+                    # Other levels where the specific dummy = 1
+                    if f'difficulty_{difficulty}' in combined_df.columns:
+                        level_data = combined_df[combined_df[f'difficulty_{difficulty}'] == 1].copy()
+                    else:
+                        continue
+
+                if len(level_data) == 0:
+                    ax.text(0.5, 0.5, f'No data for {difficulty}', ha='center', va='center', transform=ax.transAxes)
+                    continue
+
+                # Calculate hazard ratio for each model in this difficulty level
+                for model_idx, model in enumerate(unique_models):
+                    if 'model' in level_data.columns:
+                        model_data = level_data[level_data['model'] == model].copy()
+                    else:
+                        model_data = level_data.copy()
+
+                    if len(model_data) == 0:
+                        continue
+
+                    # Calculate instantaneous hazard ratio for each round
+                    rounds = sorted(model_data['round'].unique())
+                    hazard_ratios = []
+
+                    for round_num in rounds:
+                        round_data = model_data[model_data['round'] == round_num]
+
+                        # Calculate linear predictor (risk score) using available coefficients
+                        risk_score = 0
+
+                        # Add coefficients for available features
+                        for feature, coeff in coeff_map.items():
+                            if feature in round_data.columns:
+                                feature_mean = round_data[feature].mean()
+                                if not np.isnan(feature_mean):
+                                    risk_score += coeff * feature_mean
+
+                        # Add difficulty level effect (elementary is reference)
+                        if difficulty != 'elementary' and f'difficulty_{difficulty}' in coeff_map:
+                            risk_score += coeff_map[f'difficulty_{difficulty}']
+
+                        # Add model effects if available
+                        if 'model' in round_data.columns and f'model_{model}' in coeff_map:
+                            risk_score += coeff_map[f'model_{model}']
+
+                        # Convert to hazard ratio using AFT assumption
+                        # AFT: hazard ratio = exp(-risk_score) (negative because AFT accelerates/decelerates time)
+                        hazard_ratio = np.exp(-risk_score)
+                        hazard_ratios.append(hazard_ratio)
+
+                    # Plot hazard ratio curve
+                    if len(rounds) > 0 and len(hazard_ratios) > 0:
+                        ax.plot(rounds, hazard_ratios,
+                               color=colors[model_idx], linewidth=2,
+                               label=model.replace('_', ' ').title(), marker='o')
+
+                ax.axhline(y=1.0, color='black', linestyle='--', alpha=0.7, label='Baseline (HR=1.0)')
+                ax.set_xlabel('Conversation Round')
+                ax.set_ylabel('Hazard Ratio')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim(1, 8)
+                ax.set_yscale('log')  # Log scale for hazard ratios
+
+                # Add legend only to first subplot
+                if level_idx == 0:
+                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Hide empty subplots
+            for idx in range(len(available_levels), 4):
+                axes[idx].set_visible(False)
+
+            plt.tight_layout()
+            save_path = f'{self.figures_dir}/aft_hazard_ratio_by_difficulty.png'
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+
+            print(f"✅ AFT hazard ratio by difficulty saved to {save_path}")
+
+        except Exception as e:
+            print(f"❌ AFT hazard ratio by difficulty failed: {e}")
+
+    def plot_cumulative_hazard_by_difficulty(self):
+        """Create cumulative hazard plots by difficulty level for AFT models"""
+        print("\n📊 CREATING CUMULATIVE HAZARD BY DIFFICULTY")
+        print("=" * 50)
+
+        # Load round-level data for hazard calculations
+        combined_df = self._load_round_level_data()
+        if combined_df is None:
+            print("❌ No round-level data available for cumulative hazard plots")
+            return
+
+        # Get best model coefficients
+        best_model, coeff_map = self._get_best_model_coefficients()
+        if coeff_map is None:
+            print("❌ No model coefficients available for hazard calculation")
+            return
+
+        print(f"📈 Using best model: {best_model}")
+        print(f"📊 Coefficients available: {len(coeff_map)}")
+
+        try:
+            # Define difficulty levels and models
+            difficulty_levels = ['elementary', 'high_school', 'college', 'professional']
+            available_levels = [level for level in difficulty_levels if f'difficulty_{level}' in combined_df.columns or level == 'elementary']
+
+            # Get unique models from the data
+            unique_models = sorted(combined_df['model'].unique()) if 'model' in combined_df.columns else ['Combined']
+
+            # Create subplot grid (2x2 for 4 difficulty levels)
+            fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+            fig.suptitle('AFT Cumulative Hazard by Difficulty Level', fontsize=16, fontweight='bold')
+            axes = axes.flatten()
+
+            # Color palette for models
+            colors = plt.cm.tab10(np.linspace(0, 1, len(unique_models)))
+
+            for level_idx, difficulty in enumerate(available_levels):
+                if level_idx >= 4:  # Only plot first 4 levels
+                    break
+
+                ax = axes[level_idx]
+                ax.set_title(f'{difficulty.replace("_", " ").title()} Level (AFT)')
+
+                # Filter data for this difficulty level
+                if difficulty == 'elementary':
+                    # Elementary is reference level (all difficulty dummies = 0)
+                    level_data = combined_df.copy()
+                    for other_level in ['high_school', 'college', 'professional']:
+                        if f'difficulty_{other_level}' in level_data.columns:
+                            level_data = level_data[level_data[f'difficulty_{other_level}'] == 0]
+                else:
+                    # Other levels where the specific dummy = 1
+                    if f'difficulty_{difficulty}' in combined_df.columns:
+                        level_data = combined_df[combined_df[f'difficulty_{difficulty}'] == 1].copy()
+                    else:
+                        continue
+
+                if len(level_data) == 0:
+                    ax.text(0.5, 0.5, f'No data for {difficulty}', ha='center', va='center', transform=ax.transAxes)
+                    continue
+
+                # Calculate cumulative hazard for each model in this difficulty level
+                for model_idx, model in enumerate(unique_models):
+                    if 'model' in level_data.columns:
+                        model_data = level_data[level_data['model'] == model].copy()
+                    else:
+                        model_data = level_data.copy()
+
+                    if len(model_data) == 0:
+                        continue
+
+                    # Calculate cumulative hazard for each round
+                    rounds = sorted(model_data['round'].unique())
+                    cumulative_hazard = []
+                    running_cumulative = 0.0
+
+                    for round_num in rounds:
+                        round_data = model_data[model_data['round'] == round_num]
+
+                        # Calculate linear predictor (risk score) using available coefficients
+                        risk_score = 0
+
+                        # Add coefficients for available features
+                        for feature, coeff in coeff_map.items():
+                            if feature in round_data.columns:
+                                feature_mean = round_data[feature].mean()
+                                if not np.isnan(feature_mean):
+                                    risk_score += coeff * feature_mean
+
+                        # Add difficulty level effect (elementary is reference)
+                        if difficulty != 'elementary' and f'difficulty_{difficulty}' in coeff_map:
+                            risk_score += coeff_map[f'difficulty_{difficulty}']
+
+                        # Add model effects if available
+                        if 'model' in round_data.columns and f'model_{model}' in coeff_map:
+                            risk_score += coeff_map[f'model_{model}']
+
+                        # Convert to instantaneous hazard using AFT assumption
+                        baseline_hazard_rate = 0.05  # Base hazard rate per round
+                        hazard_ratio = np.exp(-risk_score)  # AFT uses negative of Cox model
+                        instantaneous_hazard = baseline_hazard_rate * hazard_ratio
+
+                        # Accumulate hazard (this ensures monotonic increase)
+                        running_cumulative += instantaneous_hazard
+                        cumulative_hazard.append(running_cumulative)
+
+                    # Plot cumulative hazard curve
+                    if len(rounds) > 0 and len(cumulative_hazard) > 0:
+                        ax.plot(rounds, cumulative_hazard,
+                               color=colors[model_idx], linewidth=2,
+                               label=model.replace('_', ' ').title(), marker='o')
+
+                ax.set_xlabel('Conversation Round')
+                ax.set_ylabel('Cumulative Hazard')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim(1, 8)
+
+                # Add legend only to first subplot
+                if level_idx == 0:
+                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Hide empty subplots
+            for idx in range(len(available_levels), 4):
+                axes[idx].set_visible(False)
+
+            plt.tight_layout()
+            save_path = f'{self.figures_dir}/aft_cumulative_hazard_by_difficulty.png'
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+
+            print(f"✅ AFT cumulative hazard by difficulty saved to {save_path}")
+
+        except Exception as e:
+            print(f"❌ AFT cumulative hazard by difficulty failed: {e}")
+
+    def plot_hazard_ratio_by_subject_cluster(self):
+        """Create instantaneous hazard ratio plots by subject cluster for AFT models"""
+        print("\n📚 CREATING HAZARD RATIO BY SUBJECT CLUSTER")
+        print("=" * 50)
+
+        # Load round-level data
+        combined_df = self._load_round_level_data()
+        if combined_df is None:
+            print("❌ No round-level data available for hazard ratio plots")
+            return
+
+        # Get best model coefficients
+        best_model, coeff_map = self._get_best_model_coefficients()
+        if coeff_map is None:
+            print("❌ No model coefficients available for hazard calculation")
+            return
+
+        try:
+            # Get available subject clusters
+            subject_cols = [col for col in combined_df.columns if col.startswith('subject_')]
+            if 'subject_cluster' in combined_df.columns:
+                subject_clusters = sorted(combined_df['subject_cluster'].unique())
+            else:
+                # Infer clusters from dummy variables
+                subject_clusters = [col.replace('subject_', '') for col in subject_cols]
+
+            # Limit to 8 clusters for better visualization
+            subject_clusters = subject_clusters[:8]
+
+            # Get unique models
+            unique_models = sorted(combined_df['model'].unique()) if 'model' in combined_df.columns else ['Combined']
+
+            # Create subplot grid (2x4 for 8 clusters)
+            fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+            fig.suptitle('AFT Hazard Ratio by Subject Cluster (Instantaneous)', fontsize=16, fontweight='bold')
+            axes = axes.flatten()
+
+            # Color palette for models
+            colors = plt.cm.tab10(np.linspace(0, 1, len(unique_models)))
+
+            for cluster_idx, cluster in enumerate(subject_clusters):
+                if cluster_idx >= 8:  # Only plot first 8 clusters
+                    break
+
+                ax = axes[cluster_idx]
+                ax.set_title(f'{cluster.replace("_", " ").title()} (AFT)')
+
+                # Filter data for this subject cluster
+                if 'subject_cluster' in combined_df.columns:
+                    cluster_data = combined_df[combined_df['subject_cluster'] == cluster].copy()
+                elif f'subject_{cluster}' in combined_df.columns:
+                    cluster_data = combined_df[combined_df[f'subject_{cluster}'] == 1].copy()
+                else:
+                    continue
+
+                if len(cluster_data) == 0:
+                    ax.text(0.5, 0.5, f'No data for {cluster}', ha='center', va='center', transform=ax.transAxes)
+                    continue
+
+                # Calculate hazard ratio for each model in this cluster
+                for model_idx, model in enumerate(unique_models):
+                    if 'model' in cluster_data.columns:
+                        model_data = cluster_data[cluster_data['model'] == model].copy()
+                    else:
+                        model_data = cluster_data.copy()
+
+                    if len(model_data) == 0:
+                        continue
+
+                    # Calculate instantaneous hazard ratio for each round
+                    rounds = sorted(model_data['round'].unique())
+                    hazard_ratios = []
+
+                    for round_num in rounds:
+                        round_data = model_data[model_data['round'] == round_num]
+
+                        # Calculate linear predictor using available coefficients
+                        risk_score = 0
+
+                        # Add coefficients for available features
+                        for feature, coeff in coeff_map.items():
+                            if feature in round_data.columns:
+                                feature_mean = round_data[feature].mean()
+                                if not np.isnan(feature_mean):
+                                    risk_score += coeff * feature_mean
+
+                        # Add subject cluster effect
+                        if f'subject_{cluster}' in coeff_map:
+                            risk_score += coeff_map[f'subject_{cluster}']
+
+                        # Add model effects if available
+                        if 'model' in round_data.columns and f'model_{model}' in coeff_map:
+                            risk_score += coeff_map[f'model_{model}']
+
+                        # Convert to hazard ratio using AFT assumption
+                        hazard_ratio = np.exp(-risk_score)
+                        hazard_ratios.append(hazard_ratio)
+
+                    # Plot hazard ratio curve
+                    if len(rounds) > 0 and len(hazard_ratios) > 0:
+                        ax.plot(rounds, hazard_ratios,
+                               color=colors[model_idx], linewidth=2,
+                               label=model.replace('_', ' ').title(), marker='o')
+
+                ax.axhline(y=1.0, color='black', linestyle='--', alpha=0.7, label='Baseline (HR=1.0)')
+                ax.set_xlabel('Conversation Round')
+                ax.set_ylabel('Hazard Ratio')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim(1, 8)
+                ax.set_yscale('log')  # Log scale for hazard ratios
+
+                # Add legend only to first subplot
+                if cluster_idx == 0:
+                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Hide empty subplots
+            for idx in range(len(subject_clusters), 8):
+                axes[idx].set_visible(False)
+
+            plt.tight_layout()
+            save_path = f'{self.figures_dir}/aft_hazard_ratio_by_subject_cluster.png'
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+
+            print(f"✅ AFT hazard ratio by subject cluster saved to {save_path}")
+
+        except Exception as e:
+            print(f"❌ AFT hazard ratio by subject cluster failed: {e}")
+
+    def plot_cumulative_hazard_by_subject_cluster(self):
+        """Create cumulative hazard plots by subject cluster for AFT models"""
+        print("\n📚 CREATING CUMULATIVE HAZARD BY SUBJECT CLUSTER")
+        print("=" * 50)
+
+        # Load round-level data
+        combined_df = self._load_round_level_data()
+        if combined_df is None:
+            print("❌ No round-level data available for cumulative hazard plots")
+            return
+
+        # Get best model coefficients
+        best_model, coeff_map = self._get_best_model_coefficients()
+        if coeff_map is None:
+            print("❌ No model coefficients available for hazard calculation")
+            return
+
+        try:
+            # Get available subject clusters
+            subject_cols = [col for col in combined_df.columns if col.startswith('subject_')]
+            if 'subject_cluster' in combined_df.columns:
+                subject_clusters = sorted(combined_df['subject_cluster'].unique())
+            else:
+                # Infer clusters from dummy variables
+                subject_clusters = [col.replace('subject_', '') for col in subject_cols]
+
+            # Limit to 8 clusters for better visualization
+            subject_clusters = subject_clusters[:8]
+
+            # Get unique models
+            unique_models = sorted(combined_df['model'].unique()) if 'model' in combined_df.columns else ['Combined']
+
+            # Create subplot grid (2x4 for 8 clusters)
+            fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+            fig.suptitle('AFT Cumulative Hazard by Subject Cluster', fontsize=16, fontweight='bold')
+            axes = axes.flatten()
+
+            # Color palette for models
+            colors = plt.cm.tab10(np.linspace(0, 1, len(unique_models)))
+
+            for cluster_idx, cluster in enumerate(subject_clusters):
+                if cluster_idx >= 8:  # Only plot first 8 clusters
+                    break
+
+                ax = axes[cluster_idx]
+                ax.set_title(f'{cluster.replace("_", " ").title()} (AFT)')
+
+                # Filter data for this subject cluster
+                if 'subject_cluster' in combined_df.columns:
+                    cluster_data = combined_df[combined_df['subject_cluster'] == cluster].copy()
+                elif f'subject_{cluster}' in combined_df.columns:
+                    cluster_data = combined_df[combined_df[f'subject_{cluster}'] == 1].copy()
+                else:
+                    continue
+
+                if len(cluster_data) == 0:
+                    ax.text(0.5, 0.5, f'No data for {cluster}', ha='center', va='center', transform=ax.transAxes)
+                    continue
+
+                # Calculate cumulative hazard for each model in this cluster
+                for model_idx, model in enumerate(unique_models):
+                    if 'model' in cluster_data.columns:
+                        model_data = cluster_data[cluster_data['model'] == model].copy()
+                    else:
+                        model_data = cluster_data.copy()
+
+                    if len(model_data) == 0:
+                        continue
+
+                    # Calculate cumulative hazard for each round
+                    rounds = sorted(model_data['round'].unique())
+                    cumulative_hazard = []
+                    running_cumulative = 0.0
+
+                    for round_num in rounds:
+                        round_data = model_data[model_data['round'] == round_num]
+
+                        # Calculate linear predictor using available coefficients
+                        risk_score = 0
+
+                        # Add coefficients for available features
+                        for feature, coeff in coeff_map.items():
+                            if feature in round_data.columns:
+                                feature_mean = round_data[feature].mean()
+                                if not np.isnan(feature_mean):
+                                    risk_score += coeff * feature_mean
+
+                        # Add subject cluster effect
+                        if f'subject_{cluster}' in coeff_map:
+                            risk_score += coeff_map[f'subject_{cluster}']
+
+                        # Add model effects if available
+                        if 'model' in round_data.columns and f'model_{model}' in coeff_map:
+                            risk_score += coeff_map[f'model_{model}']
+
+                        # Convert to instantaneous hazard using AFT assumption
+                        baseline_hazard_rate = 0.05  # Base hazard rate per round
+                        hazard_ratio = np.exp(-risk_score)  # AFT uses negative of Cox model
+                        instantaneous_hazard = baseline_hazard_rate * hazard_ratio
+
+                        # Accumulate hazard (this ensures monotonic increase)
+                        running_cumulative += instantaneous_hazard
+                        cumulative_hazard.append(running_cumulative)
+
+                    # Plot cumulative hazard curve
+                    if len(rounds) > 0 and len(cumulative_hazard) > 0:
+                        ax.plot(rounds, cumulative_hazard,
+                               color=colors[model_idx], linewidth=2,
+                               label=model.replace('_', ' ').title(), marker='o')
+
+                ax.set_xlabel('Conversation Round')
+                ax.set_ylabel('Cumulative Hazard')
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim(1, 8)
+
+                # Add legend only to first subplot
+                if cluster_idx == 0:
+                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+            # Hide empty subplots
+            for idx in range(len(subject_clusters), 8):
+                axes[idx].set_visible(False)
+
+            plt.tight_layout()
+            save_path = f'{self.figures_dir}/aft_cumulative_hazard_by_subject_cluster.png'
+            plt.savefig(save_path, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+
+            print(f"✅ AFT cumulative hazard by subject cluster saved to {save_path}")
+
+        except Exception as e:
+            print(f"❌ AFT cumulative hazard by subject cluster failed: {e}")
+
     def create_all_visualizations(self):
         """Create all AFT visualizations"""
         print("🎨 CREATING COMPREHENSIVE AFT VISUALIZATIONS")
         print("=" * 80)
-        
+
         if not self.load_results():
             return
-        
+
         print("=" * 80)
-        
+
         # Create all visualizations
         self.plot_model_performance_comparison()
         print("=" * 80)
-        
+
         self.plot_feature_importance_analysis()
         print("=" * 80)
-        
+
         self.plot_model_coefficients_heatmap()
         print("=" * 80)
-        
+
         self.plot_model_rankings_dashboard()
         print("=" * 80)
-        
+
         self.plot_survival_insights_analysis()
         print("=" * 80)
 
@@ -1328,8 +1857,22 @@ class AFTVisualizer:
 
         self.plot_subject_cluster_analysis()
         print("=" * 80)
-        
+
         self.plot_difficulty_level_analysis()
+        print("=" * 80)
+
+        # Add hazard ratio plots (instantaneous)
+        self.plot_hazard_ratio_by_difficulty()
+        print("=" * 80)
+
+        self.plot_hazard_ratio_by_subject_cluster()
+        print("=" * 80)
+
+        # Add cumulative hazard plots
+        self.plot_cumulative_hazard_by_difficulty()
+        print("=" * 80)
+
+        self.plot_cumulative_hazard_by_subject_cluster()
         print("=" * 80)
         
         print("🎉 ALL AFT VISUALIZATIONS COMPLETED!")
@@ -1343,6 +1886,10 @@ class AFTVisualizer:
         print("   • driver_dynamics_evolution.png - Driver dynamics across rounds")
         print("   • aft_subject_cluster_analysis.png - Subject cluster impact analysis")
         print("   • aft_difficulty_level_analysis.png - Difficulty level progression analysis")
+        print("   • aft_hazard_ratio_by_difficulty.png - Instantaneous hazard ratio by difficulty level")
+        print("   • aft_hazard_ratio_by_subject_cluster.png - Instantaneous hazard ratio by subject cluster")
+        print("   • aft_cumulative_hazard_by_difficulty.png - Cumulative hazard by difficulty level")
+        print("   • aft_cumulative_hazard_by_subject_cluster.png - Cumulative hazard by subject cluster")
 
 def main():
     """Main execution function"""

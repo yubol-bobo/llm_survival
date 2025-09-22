@@ -4,7 +4,14 @@
       "Bash(call conda activate survival_analysis)",
       "Bash(python test:*)",
       "Bash(conda run:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(conda activate:*)",
+      "Bash(conda install:*)",
+      "Bash(for model in claude_35 deepseek_r1 gpt_4o gpt_oss llama_33 llama_4_maverick mistral_large qwen_2.5 qwen_3)",
+      "Bash(do tail -n +2 $model/$model_long.csv)",
+      "Bash(done)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []
