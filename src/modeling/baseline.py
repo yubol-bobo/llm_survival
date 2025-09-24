@@ -262,6 +262,16 @@ class BaselineModeling:
                 return None
         
         # Extract results
+        n_fit = getattr(fitted_model, '_n_examples', len(combined_df))
+        try:
+            num_params = len(fitted_model.params_)
+        except Exception:
+            num_params = np.nan
+        if n_fit and n_fit > 0 and num_params == num_params:
+            bic_value = -2 * fitted_model.log_likelihood_ + num_params * np.log(n_fit)
+        else:
+            bic_value = np.nan
+
         combined_result = {
             'model': 'COMBINED_ALL_LLMS',
             'frailty_type': frailty_used,
@@ -272,6 +282,7 @@ class BaselineModeling:
             'n_models': len(self.models_data),
             'c_index': fitted_model.concordance_index_,
             'aic': getattr(fitted_model, 'AIC_partial_', np.nan),
+            'bic': bic_value,
             'log_likelihood': fitted_model.log_likelihood_,
             'model_names': ', '.join(list(self.models_data.keys()))
         }
@@ -314,7 +325,7 @@ class BaselineModeling:
         # Export combined model results
         if hasattr(self, 'combined_results'):
             # 1. Model performance metrics
-            performance_cols = ['model', 'frailty_type', 'n_observations', 'n_events', 'n_conversations', 'n_subjects', 'n_models', 'c_index', 'aic', 'log_likelihood', 'model_names']
+            performance_cols = ['model', 'frailty_type', 'n_observations', 'n_events', 'n_conversations', 'n_subjects', 'n_models', 'c_index', 'aic', 'bic', 'log_likelihood', 'model_names']
             available_cols = [col for col in performance_cols if col in self.combined_results.columns]
             performance_df = self.combined_results[available_cols].copy()
             performance_df.to_csv(f'{output_dir}/model_performance.csv', index=False)

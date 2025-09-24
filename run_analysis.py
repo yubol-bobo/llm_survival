@@ -11,7 +11,7 @@ Stages:
 1. Baseline modeling - Basic Cox PH survival analysis
 2. Advanced modeling - Interaction effects with drift×model terms
 3. AFT modeling - Accelerated Failure Time models
-4. RSF modeling - (Currently disabled)
+4. RSF modeling
 5. Test evaluation - Predictive performance on held-out test set
 6. Visualization generation - Publication-ready plots
 
@@ -193,12 +193,11 @@ class LLMSurvivalPipeline:
             print(f"❌ AFT modeling failed: {e}")
             return None
 
-    def run_rsf_stage(self):
+    def run_rsf_stage(self, generate_viz=True):
         """Run RSF modeling stage (currently disabled)."""
-        print("\n🚀 STAGE 4: RSF MODELING (DISABLED)")
+        print("\n?? STAGE 4: RSF MODELING (DISABLED)")
         print("=" * 40)
-
-        print("⚠️  RSF modeling is currently disabled")
+        print("??  RSF modeling is currently disabled")
         print("   To enable: uncomment RSF import and stage execution in run_analysis.py")
         return None
 
@@ -251,7 +250,7 @@ class LLMSurvivalPipeline:
             # Generate RSF visualizations
             if os.path.exists('results/outputs/rsf'):
                 print("\n🎨 GENERATING RSF VISUALIZATIONS")
-                print("📊 RSF visualization integration coming soon...")
+                print("RSF visualization integration coming soon...")
             else:
                 print("⚠️  No RSF results found, skipping RSF visualizations")
 
@@ -284,8 +283,7 @@ class LLMSurvivalPipeline:
         # Stage 3: AFT
         results['aft'] = self.run_aft_stage()
 
-        # Stage 4: RSF (disabled for now)
-        # results['rsf'] = self.run_rsf_stage()
+        # Stage 4: RSF (disabled)
         results['rsf'] = None
 
         # Stage 5: Test Evaluation
@@ -348,3 +346,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

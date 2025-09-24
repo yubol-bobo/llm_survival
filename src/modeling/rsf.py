@@ -278,15 +278,20 @@ class RSFModeling:
             'min_samples_leaf': [5, 10]
         }
 
-        print(f"🔧 Testing {len(list(ParameterGrid(param_grid)))} parameter combinations")
+        all_param_combinations = list(ParameterGrid(param_grid))
+        max_combinations = 2  # Temporary limit; adjust as needed
+        if len(all_param_combinations) > max_combinations:
+            print(f"Testing {max_combinations} of {len(all_param_combinations)} parameter combinations (temporary limit)")
+            param_combinations = all_param_combinations[:max_combinations]
+        else:
+            print(f"Testing {len(all_param_combinations)} parameter combinations")
+            param_combinations = all_param_combinations
 
         best_score = -np.inf
         best_params = None
         tuning_results = []
 
         # Progress bar for hyperparameter search
-        param_combinations = list(ParameterGrid(param_grid))
-
         for params in tqdm(param_combinations, desc="Hyperparameter tuning"):
             try:
                 # Fit RSF model
@@ -296,7 +301,8 @@ class RSFModeling:
                     min_samples_split=params['min_samples_split'],
                     min_samples_leaf=params['min_samples_leaf'],
                     random_state=42,
-                    n_jobs=1  # Prevent memory issues
+                    n_jobs=1,  # Prevent memory issues
+                    oob_score=True
                 )
 
                 rsf.fit(self.X, self.y)
@@ -314,7 +320,7 @@ class RSFModeling:
                     'min_samples_split': params['min_samples_split'],
                     'min_samples_leaf': params['min_samples_leaf'],
                     'c_index': c_index,
-                    'oob_score': rsf.oob_score_
+                    'oob_score': getattr(rsf, 'oob_score_', np.nan)
                 }
                 tuning_results.append(result)
 
@@ -354,7 +360,8 @@ class RSFModeling:
             min_samples_split=self.best_params['min_samples_split'],
             min_samples_leaf=self.best_params['min_samples_leaf'],
             random_state=42,
-            n_jobs=1
+            n_jobs=1,
+            oob_score=True
         )
 
         print(f"🔧 Fitting RSF with parameters: {self.best_params}")

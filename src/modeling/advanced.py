@@ -220,6 +220,12 @@ class AdvancedModeling:
                         significant_interactions.append(term)
             
             # Store combined results
+            n_fit = len(modeling_data)
+            full_params = len(cph_full.params_)
+            reduced_params = len(cph_reduced.params_)
+            full_bic = -2 * cph_full.log_likelihood_ + full_params * np.log(n_fit) if n_fit > 0 else np.nan
+            reduced_bic = -2 * cph_reduced.log_likelihood_ + reduced_params * np.log(n_fit) if n_fit > 0 else np.nan
+
             result = {
                 'model': 'COMBINED_WITH_INTERACTIONS',
                 'analysis_type': 'drift_model_interactions',
@@ -230,6 +236,8 @@ class AdvancedModeling:
                 'reduced_c_index': cph_reduced.concordance_index_,
                 'full_aic': getattr(cph_full, 'AIC_partial_', np.nan),
                 'reduced_aic': getattr(cph_reduced, 'AIC_partial_', np.nan),
+                'full_bic': full_bic,
+                'reduced_bic': reduced_bic,
                 'full_log_likelihood': cph_full.log_likelihood_,
                 'reduced_log_likelihood': cph_reduced.log_likelihood_,
                 'lr_statistic': lr_statistic,
@@ -304,6 +312,9 @@ class AdvancedModeling:
                        strata=['subject_encoded'], show_progress=False)
                 
                 # Store stratified results
+                n_fit = len(model_data)
+                num_params = len(cph.params_)
+                bic_value = -2 * cph.log_likelihood_ + num_params * np.log(n_fit) if n_fit > 0 else np.nan
                 result = {
                     'model': model_name,
                     'analysis_type': 'subject_stratified',
@@ -311,6 +322,7 @@ class AdvancedModeling:
                     'n_events': model_data['failure'].sum(),
                     'c_index': cph.concordance_index_,
                     'aic': getattr(cph, 'AIC_partial_', np.nan),
+                    'bic': bic_value,
                     'n_strata': len(data['subject_cluster'].unique())
                 }
                 
@@ -391,6 +403,9 @@ class AdvancedModeling:
                        strata=['difficulty_encoded'], show_progress=False)
                 
                 # Store stratified results
+                n_fit = len(model_data)
+                num_params = len(cph.params_)
+                bic_value = -2 * cph.log_likelihood_ + num_params * np.log(n_fit) if n_fit > 0 else np.nan
                 result = {
                     'model': model_name,
                     'analysis_type': 'difficulty_stratified',
@@ -398,6 +413,7 @@ class AdvancedModeling:
                     'n_events': model_data['failure'].sum(),
                     'c_index': cph.concordance_index_,
                     'aic': getattr(cph, 'AIC_partial_', np.nan),
+                    'bic': bic_value,
                     'n_strata': len(data['difficulty_level'].unique())
                 }
                 
